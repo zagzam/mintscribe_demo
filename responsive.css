@@ -1,0 +1,10 @@
+@media(max-width:960px){
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .hero>*{min-width:0}
+  .practice-layout{grid-template-columns:minmax(0,1fr)}
+  .practice-layout>div,.practice-layout>aside{min-width:0}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .player{grid-template-columns:42px minmax(0,1fr) auto}
+}
