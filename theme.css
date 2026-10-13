@@ -3,6 +3,13 @@
 .theme-toggle svg{display:block;width:17px;height:17px;flex:none}
 html[data-theme="light"] .theme-toggle{background:#fff;border-color:#c5d8da;color:#25454d}
 html[data-theme="light"] .theme-toggle:hover{background:#ecf7f3;border-color:#6cae9d}
+.resume-card{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:14px;padding:13px 15px;border:1px solid #39786f;border-radius:13px;background:#163033;color:#e7fbf6}
+.resume-copy{display:grid;gap:3px;min-width:0}.resume-copy small{color:#78ddc7;font-size:10px;font-weight:800}.resume-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.resume-copy span{color:#b9d1d3;font-size:10px}
+.resume-actions{display:flex;align-items:center;gap:7px;flex:none}.resume-button{border:0;border-radius:9px;padding:9px 11px;background:#61e0c2;color:#102b2e;font-size:11px;font-weight:800}.resume-clear{border:1px solid #63827e;border-radius:9px;padding:8px 10px;background:transparent;color:#d5e9e5;font-size:10px;font-weight:700}
+.resume-button:hover{background:#8df2da}.resume-clear:hover{border-color:#9cc3bb;background:#ffffff12}
+html[data-theme="light"] .resume-card{background:#eaf7f1;border-color:#b7dbcc;color:#1b3b3c}html[data-theme="light"] .resume-copy small{color:#176e5d}html[data-theme="light"] .resume-copy span{color:#506e71}html[data-theme="light"] .resume-button{background:#147864;color:#fff}html[data-theme="light"] .resume-button:hover{background:#0d604f}html[data-theme="light"] .resume-clear{border-color:#a8c8bf;color:#2c5651}html[data-theme="light"] .resume-clear:hover{background:#d9eee6}
+.missing-audio{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:9px 0;padding:10px;border:1px solid #7fa9a5;border-radius:10px;background:#19353a;color:#e3f5f2;font-size:11px;line-height:1.5}.missing-audio .secondary-btn{flex:none}.storage-warning{position:fixed;z-index:20;left:50%;bottom:18px;transform:translateX(-50%);max-width:min(620px,calc(100vw - 30px));padding:11px 15px;border:1px solid #e1ab57;border-radius:10px;background:#fff2dc;color:#583b1e;box-shadow:0 8px 25px #0003;font-size:12px;line-height:1.5}
+html[data-theme="light"] .missing-audio{background:#eef8f4;border-color:#b7dacc;color:#2a4c4a}
 
 /* Keep the keyboard scrolling fix in both color modes. */
 @media(max-width:760px),(max-height:700px){
@@ -31,6 +38,7 @@ html[data-theme="light"] .theme-toggle:hover{background:#ecf7f3;border-color:#6c
  .top-actions{gap:7px}
  .theme-toggle{width:32px;min-height:32px;padding:5px}
  .theme-toggle span{display:none}
+ .resume-card{align-items:stretch;flex-direction:column;gap:10px}.resume-actions{justify-content:flex-start}.missing-audio{align-items:stretch;flex-direction:column}
  .home-page{min-height:calc(100svh - 55px)}.practice-page{min-height:calc(100svh - 55px);padding:12px}
  .home-story{height:auto;min-height:170px}.neon-load{flex:none}.load-mode{flex:none}.load-bottom{grid-template-columns:minmax(0,1fr) auto}
  .workbench{grid-template-columns:minmax(0,1fr);gap:10px}
