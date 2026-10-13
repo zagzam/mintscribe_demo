@@ -1,8 +1,6 @@
 /* The compact visual layer reuses the parser, playback, scoring and recording logic in app.js. */
-state.loadTab = 'url';
+state.loadTab = state.audioUrlInput || state.textUrlInput ? 'url' : 'files';
 state.scope = '10';
-state.audioUrlInput ||= 'https://files.mintenglish.site/beta/mintscribe/20261012_1800_Viya.m4a';
-state.textUrlInput ||= 'https://files.mintenglish.site/beta/mintscribe/20261012_1800_Viya.vtt';
 state.panel = 'hint';
 state.hintIndex = 0;
 state.compactToolOpen = false;
@@ -102,6 +100,92 @@ function shadowMarkup(c) {
     ${scores ? `<div class="score-heading"><span>${state.lang === 'ko' ? '문장 평균 · 시연 점수' : 'Sentence average · demo'}</span><strong>${average}<small> / 100</small></strong></div><div class="score-flow">${scores.map(x => `<span class="score-word" style="--tone:${scoreColor(x.score)}" title="${x.word}: ${x.score.toFixed(1)}"><b>${esc(x.word)}</b><small>${x.score.toFixed(0)}</small></span>`).join('')}</div><div class="score-legend"><div class="legend-gradient"><span class="pass-marker" title="80 ${state.lang === 'ko' ? '통과' : 'pass'}"></span></div><div class="legend-labels"><span>0 · ${state.lang === 'ko' ? '다시 연습' : 'Practice'}</span><span class="pass-label">80+ ${state.lang === 'ko' ? '통과' : 'Pass'}</span><span>100 · ${state.lang === 'ko' ? '매우 좋음' : 'Excellent'}</span></div></div>` : `<div class="shadow-placeholder">♬ <span>${state.lang === 'ko' ? '녹음 후 내 발음을 듣고, 시연 점수를 확인할 수 있어요.' : 'Record, listen back, then explore the demo scores.'}</span></div>`}`;
 }
 
+function punctuatedStudentLine(c) {
+  const source = String(c.text || '');
+  const reference = [...source.matchAll(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu)];
+  const typed = state.wordAnswers[c.id] || wordTokens(state.answers[c.id] || '');
+  const output = [];
+  let pending = source.slice(0, reference[0]?.index || 0).replace(/\s/g, '');
+  reference.forEach((match, i) => {
+    const answer = (typed[i] || '').trim();
+    if (answer) {
+      const clean = wordTokens(answer).join(' ');
+      let word = clean;
+      if (match[0].length > 1 && match[0] === match[0].toLocaleUpperCase('en')) word = clean.toLocaleUpperCase('en');
+      else if (/^\p{Lu}/u.test(match[0])) word = clean.replace(/^\p{L}/u, char => char.toLocaleUpperCase('en'));
+      else word = clean.replace(/^\p{Lu}/u, char => char.toLocaleLowerCase('en'));
+      if (word) { output.push(pending + word); pending = ''; }
+    }
+    const end = match.index + match[0].length;
+    const next = reference[i + 1]?.index ?? source.length;
+    const marks = source.slice(end, next).replace(/\s/g, '');
+    if (marks) {
+      if (output.length) {
+        if (/^[.!?…]/u.test(marks)) output[output.length - 1] = output[output.length - 1].replace(/[,;:]$/u, '');
+        if (!output[output.length - 1].endsWith(marks)) output[output.length - 1] += marks;
+      }
+      else pending += marks;
+    }
+  });
+  return output.join(' ');
+}
+
+function summaryExportMarkup() {
+  const title = state.lang === 'ko' ? '나의 수업 받아쓰기' : 'My class transcription';
+  const lines = state.selected.map((c, i) => {
+    const sentence = punctuatedStudentLine(c);
+    return `<p style="display:flex;gap:14px;align-items:baseline;margin:0;padding:13px 0;border-bottom:1px solid #dfe9ee;color:#183047;font:500 16px/1.7 Arial,sans-serif;"><span style="flex:none;color:#608292;font:700 11px/1.7 Arial,sans-serif;">${String(i + 1).padStart(2, '0')}</span><span>${sentence ? esc(sentence) : `<em style="color:#93a7b3;">${state.lang === 'ko' ? '미작성' : 'Not transcribed'}</em>`}</span></p>`;
+  }).join('');
+  return `<section style="background:#ffffff;border:1px solid #d9e9ef;border-radius:20px;padding:clamp(20px,3vw,34px);box-shadow:0 14px 34px #081b2d12;">
+    <div style="color:#348a91;font:800 11px/1.4 Arial,sans-serif;letter-spacing:1.5px;">MINTSCRIBE 2.0 · TRANSCRIPT</div>
+    <h2 style="color:#142d41;font:800 26px/1.35 Arial,sans-serif;margin:7px 0 4px;">${title}</h2>
+    <p style="color:#607b8a;font:400 12px/1.6 Arial,sans-serif;margin:0 0 14px;">${state.lang === 'ko' ? '직접 받아쓴 문장 · 구두점과 대문자는 AI 자막을 참고해 정리했어요.' : 'Your words, with punctuation and capitalization guided by the AI transcript.'}</p>
+    <div>${lines}</div>
+  </section>
+  <aside style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;background:linear-gradient(120deg,#ffffff,#f4f7f9);border:1px solid #d7e0e7;border-top:3px solid #54d7bd;border-radius:16px;padding:17px 19px;margin-top:14px;box-shadow:0 8px 24px #14283a12;font-family:Arial,sans-serif;color:#243748;">
+    <div style="width:44px;height:44px;flex:none;display:grid;place-items:center;background:linear-gradient(145deg,#12263b,#21475a);border-radius:13px;color:#8ff5df;font-size:24px;box-shadow:0 5px 12px #17324630;">✦</div>
+    <div style="flex:1;min-width:160px;"><div style="font-size:10px;font-weight:800;color:#468f8b;letter-spacing:1px;">수업을 다시 듣는 새로운 방법</div><div style="font-size:15px;font-weight:800;margin:3px 0;color:#182c3c;">MintScribe 2.0 (베타)으로 받아썼어요</div><div style="font-size:12px;line-height:1.5;color:#657684;">듣고, 쓰고, 내 것으로 만드는 수업 복습</div></div>
+    <a href="https://zagzam.github.io/mintscribe_demo/" target="_blank" rel="noopener noreferrer" style="display:inline-block;flex:none;background:#20384b;border-radius:9px;padding:9px 12px;color:#ffffff;font-size:11px;font-weight:800;text-decoration:none;white-space:nowrap;">MintScribe 2.0 (베타) 써보기 ↗</a>
+  </aside>`;
+}
+
+function renderSummary() {
+  stopAudio();
+  state.view = 'summary';
+  const done = Object.keys(state.results).length;
+  const rows = state.selected.map((c, i) => `<div class="summary-row"><span>${String(i + 1).padStart(2, '0')} · ${mmss(c.start)}</span><span>${state.results[c.id] ? state.results[c.id].score + '%' : '—'}</span></div>`).join('');
+  shell(`<main class="page summary summary-v2"><header class="summary-v2-head"><div><div class="eyebrow">MINTSCRIBE 2.0 / REVIEW</div><h1>${state.lang === 'ko' ? '내가 받아쓴 수업' : 'What I heard in class'}</h1><p>${state.lang === 'ko' ? '선생님의 말에서 직접 받아쓴 내용을 한눈에 확인하세요.' : 'Review the teacher’s words you transcribed.'}</p></div><button class="summary-copy-btn" data-action="copySummary" aria-label="${state.lang === 'ko' ? '받아쓰기 HTML 복사' : 'Copy transcription HTML'}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>${state.lang === 'ko' ? 'HTML 복사' : 'Copy HTML'}</span></button></header>
+    <div id="copyStatus" class="copy-status" role="status" aria-live="polite"></div>
+    <div id="exportView" class="summary-export">${summaryExportMarkup()}</div>
+    <div class="summary-compact"><div><small>${t('totalTime')}</small><b>${mmss(state.seconds)}</b></div><div><small>${t('completed')}</small><b>${done} / ${state.selected.length}</b></div><div><small>${t('avg')}</small><b>${done ? avgScore() + '%' : '—'}</b></div></div>
+    <details class="summary-details"><summary>${state.lang === 'ko' ? '문장별 점수 보기' : 'View scores by caption'}</summary><div class="summary-list">${rows}</div></details>
+    <div class="summary-v2-actions"><button class="secondary-btn" data-action="home">${t('newFiles')}</button><button class="primary-btn" data-action="restart">${t('restart')} →</button></div>
+    <p class="footnote">${t('reviewCaveat')}</p>
+  </main>`);
+}
+
+async function copySummaryHtml() {
+  const view = $('#exportView');
+  if (!view) return;
+  const html = view.innerHTML;
+  const plain = state.selected.map((c, i) => `${i + 1}. ${punctuatedStudentLine(c) || (state.lang === 'ko' ? '미작성' : 'Not transcribed')}`).join('\n') + '\n\nMintScribe 2.0 · https://zagzam.github.io/mintscribe_demo/';
+  let copied = false;
+  try {
+    if (navigator.clipboard?.write && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([html], {type:'text/html'}), 'text/plain': new Blob([plain], {type:'text/plain'})})]);
+      copied = true;
+    }
+  } catch (_) { /* Try selection-based rich copy below. */ }
+  if (!copied) {
+    const selection = window.getSelection(), range = document.createRange();
+    range.selectNodeContents(view); selection.removeAllRanges(); selection.addRange(range);
+    copied = document.execCommand('copy');
+    selection.removeAllRanges();
+  }
+  const status = $('#copyStatus');
+  status.textContent = copied ? (state.lang === 'ko' ? '받아쓰기와 MintScribe 카드가 복사됐어요.' : 'Transcription and attribution copied.') : (state.lang === 'ko' ? '복사하지 못했어요. 다시 시도해 주세요.' : 'Copy failed. Please try again.');
+}
+
 function wordInputsMarkup(c) {
   const words = wordTokens(c.text), typed = state.wordAnswers[c.id] || [];
   const count = words.length;
@@ -127,7 +211,7 @@ function renderPractice() {
     <div class="session-strip"><div class="session-progress"><span>${t('progress')} <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('activeTime')}</small><b id="timeValue">${mmss(state.seconds)}</b></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.results).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>${t('pass')}</small><b>${Object.values(state.results).filter(x => x.score >= 80).length}/${state.selected.length}</b></div></div>
     <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><span class="cue-label">CAPTION ${String(state.index + 1).padStart(2, '0')} / ${String(state.selected.length).padStart(2, '0')}</span><h2>${esc(c.speaker)}</h2></div><div class="cue-navigation"><button data-action="prev" aria-label="Previous caption" ${state.index === 0 ? 'disabled' : ''}>←</button><select id="cueJump" aria-label="${t('items')}">${state.selected.map((x, i) => `<option value="${i}" ${i === state.index ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${mmss(x.start)}</option>`).join('')}</select><button data-action="next" aria-label="Next caption">→</button></div></div>
       <div class="cue-time">${mmss(c.start)} — ${mmss(c.end)} <span>·</span> ${duration(c)} <span>·</span> ${wordTokens(c.text).length} ${t('words')}</div>
-      <div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><div class="wave" aria-hidden="true">${Array.from({length:39}, (_, i) => `<i style="height:${16 + ((i * 17 + 7) % 28)}px"></i>`).join('')}</div><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div>
+      <div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><button class="restart-button" data-action="restartAudio" ${state.sample ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}" title="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}">⏮</button><input class="seek-bar" id="seekBar" type="range" min="${c.start}" max="${c.end}" step="0.01" value="${c.start}" style="--seek-pct:0%" aria-label="${state.lang === 'ko' ? '재생 위치' : 'Playback position'}" aria-valuetext="${mmss(c.start)}" ${state.sample ? 'disabled' : ''}><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div>
       <div class="play-options"><button class="pill-btn ${state.loop ? 'active' : ''}" data-action="loop" aria-pressed="${state.loop}">↺ ${t('loop')}</button><select id="speed" class="speed-select" aria-label="${t('slow')}"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option></select><button class="pill-btn timer-pill ${state.paused ? '' : 'active'}" data-action="timer">${state.paused ? t('timerResume') : t('timerPause')}</button></div>
       ${state.sample ? `<div class="sample-note">${t('sampleNoAudio')}</div>` : ''}
       <div class="write-label"><span>${t('write')}</span><small>${state.lang === 'ko' ? '단어 아래 글자 수를 보고 입력하세요' : 'Use the letter count below each word'}</small></div>${wordInputsMarkup(c)}<textarea id="answer" class="hidden" tabindex="-1" aria-hidden="true">${esc(state.answers[c.id] || '')}</textarea>
@@ -136,8 +220,50 @@ function renderPractice() {
     <audio id="sourceAudio" src="${esc(state.audioUrl || '')}" preload="metadata"></audio>
   </main>`);
   bindPractice();
+  bindSeekBar(c);
   bindWordInputs(c);
   $('#cueJump').addEventListener('change', event => { stopAudio(); state.index = Number(event.target.value); renderPractice(); });
+}
+
+function bindSeekBar(c) {
+  const audio = $('#sourceAudio'), seek = $('#seekBar');
+  const sync = () => {
+    const position = Math.min(c.end, Math.max(c.start, audio.currentTime || c.start));
+    const percent = Math.max(0, Math.min(100, ((position - c.start) / Math.max(c.end - c.start, 0.01)) * 100));
+    seek.value = String(position);
+    seek.style.setProperty('--seek-pct', `${percent}%`);
+    seek.setAttribute('aria-valuetext', mmss(position));
+    const display = $('#playerTime');
+    if (display) display.textContent = `${mmss(position)} / ${mmss(c.end)}`;
+  };
+  seek.addEventListener('input', () => {
+    const position = Math.min(c.end, Math.max(c.start, Number(seek.value)));
+    try { audio.currentTime = position; } catch (_) { /* The media may still be loading. */ }
+    seek.style.setProperty('--seek-pct', `${((position - c.start) / Math.max(c.end - c.start, 0.01)) * 100}%`);
+    seek.setAttribute('aria-valuetext', mmss(position));
+    const display = $('#playerTime');
+    if (display) display.textContent = `${mmss(position)} / ${mmss(c.end)}`;
+  });
+  audio.addEventListener('timeupdate', sync);
+  audio.addEventListener('seeked', sync);
+  audio.addEventListener('loadedmetadata', sync);
+  sync();
+}
+
+async function restartCueAudio() {
+  if (state.sample) return;
+  const audio = $('#sourceAudio'), c = current();
+  audio.currentTime = c.start;
+  const seek = $('#seekBar');
+  seek.value = String(c.start);
+  seek.style.setProperty('--seek-pct', '0%');
+  $('#playerTime').textContent = `${mmss(c.start)} / ${mmss(c.end)}`;
+  try {
+    await audio.play();
+    state.playing = true;
+    state.lastActive = Date.now();
+    syncPlayButton();
+  } catch (error) { alert(error.message); }
 }
 
 function bindWordInputs(c) {
@@ -176,6 +302,8 @@ app.addEventListener('click', event => {
   const button = event.target.closest('[data-action]');
   if (!button) return;
   const action = button.dataset.action;
+  if (action === 'copySummary') { copySummaryHtml(); }
+  if (action === 'restartAudio') { restartCueAudio(); }
   if (action === 'loadTab') { state.loadTab = button.dataset.tab; state.error = ''; renderHome(); }
   if (action === 'panel') { state.panel = button.dataset.panel; state.compactToolOpen = true; renderPractice(); }
   if (action === 'toolClose') { state.compactToolOpen = false; renderPractice(); }
