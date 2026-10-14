@@ -1,6 +1,6 @@
 /* The compact visual layer reuses the parser, playback, scoring and recording logic in app.js. */
 state.loadTab = state.audioUrlInput || state.textUrlInput ? 'url' : 'files';
-state.scope = '10';
+state.scope = state.scope || '10';
 state.panel = 'hint';
 state.hintIndex = 0;
 state.compactToolOpen = false;
