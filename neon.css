@@ -113,7 +113,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .summary-compact>div{display:flex;align-items:baseline;justify-content:space-between;gap:10px;background:#111e32;border:1px solid #314762;border-radius:10px;padding:10px 13px}
 .summary-compact small{color:#90abc5;font-size:10px}.summary-compact b{color:#e8faff;font-size:16px;white-space:nowrap}
 .summary-details{background:#101b30;border:1px solid #30435e;border-radius:10px;padding:0 13px;color:#dceaf7}.summary-details summary{cursor:pointer;font-size:11px;font-weight:800;padding:10px 0;color:#9ddfdb}.summary-details .summary-list{border:0;background:transparent;border-radius:0;padding:0 0 8px}.summary-details .summary-row{padding:7px 0;font-size:11px}
-.summary-v2-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}.summary-v2-actions .secondary-btn,.summary-v2-actions .primary-btn{padding:9px 12px;font-size:11px}
+.summary-v2-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:15px}.summary-v2-actions [data-action="returnPractice"]{margin-right:auto}.summary-v2-actions .secondary-btn,.summary-v2-actions .primary-btn{padding:9px 12px;font-size:11px}
 .summary-v2 .footnote{margin:12px 0 0;color:#849db7;font-size:10px}
 @media(max-width:760px){.summary-v2{padding:17px 10px 30px}.summary-v2-head{align-items:flex-start}.summary-v2-head h1{font-size:23px}.summary-v2-head p{font-size:10px}.summary-copy-btn{padding:9px 10px;font-size:10px}.summary-copy-btn svg{width:15px;height:15px}.summary-compact>div{display:block;padding:8px}.summary-compact small{display:block;font-size:9px}.summary-compact b{display:block;font-size:13px;margin-top:2px}}
 /* Segment playback with restart and a draggable timeline */

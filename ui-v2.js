@@ -159,7 +159,7 @@ function renderSummary() {
     <div id="exportView" class="summary-export">${summaryExportMarkup()}</div>
     <div class="summary-compact"><div><small>${t('totalTime')}</small><b>${mmss(state.seconds)}</b></div><div><small>${t('completed')}</small><b>${done} / ${state.selected.length}</b></div><div><small>${t('avg')}</small><b>${done ? avgScore() + '%' : '—'}</b></div></div>
     <details class="summary-details"><summary>${state.lang === 'ko' ? '문장별 점수 보기' : 'View scores by caption'}</summary><div class="summary-list">${rows}</div></details>
-    <div class="summary-v2-actions"><button class="secondary-btn" data-action="home">${t('newFiles')}</button><button class="primary-btn" data-action="restart">${t('restart')} →</button></div>
+    <div class="summary-v2-actions"><button class="secondary-btn" data-action="returnPractice">← ${state.lang === 'ko' ? '연습으로 돌아가기' : 'Back to practice'}</button><button class="secondary-btn" data-action="home">${t('newFiles')}</button><button class="primary-btn" data-action="restart">${t('restart')} →</button></div>
     <p class="footnote">${t('reviewCaveat')}</p>
   </main>`);
 }
@@ -302,6 +302,7 @@ app.addEventListener('click', event => {
   const button = event.target.closest('[data-action]');
   if (!button) return;
   const action = button.dataset.action;
+  if (action === 'returnPractice') { renderPractice(); }
   if (action === 'copySummary') { copySummaryHtml(); }
   if (action === 'restartAudio') { restartCueAudio(); }
   if (action === 'loadTab') { state.loadTab = button.dataset.tab; state.error = ''; renderHome(); }

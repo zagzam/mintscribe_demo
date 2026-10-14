@@ -86,8 +86,9 @@
   function snapshot(sourceId = activeSourceId) {
     if (!sourceId || !state.selected.length) return null;
     const view = state.view === 'home' ? lastSessionView : state.view;
+    const complete = state.selected.every(cue => state.results[cue.id]);
     return {
-      version: 1, sourceId, savedAt: Date.now(), view: view === 'summary' ? 'summary' : 'practice',
+      version: 1, sourceId, savedAt: Date.now(), view: view === 'summary' && complete ? 'summary' : 'practice',
       selectedIds: state.selected.map(cue => cue.id), index: state.index,
       answers: state.answers, wordAnswers: state.wordAnswers, results: state.results,
       hints: state.hints, hintUsed: state.hintUsed, seconds: state.seconds,
@@ -219,8 +220,10 @@
   function restorePractice() {
     if (!savedSource || !savedProgress) return;
     const source = savedSource, progress = savedProgress;
+    const resumeSummary = progress.view === 'summary' && progress.selectedIds?.length > 0
+      && progress.selectedIds.every(id => progress.results?.[id]);
     if (activeSourceId === source.id && state.selected.length && state.view === 'home') {
-      if (progress.view === 'summary') renderSummary();
+      if (resumeSummary) renderSummary();
       else renderPractice();
       return;
     }
@@ -257,7 +260,7 @@
     state.lastRenderedCue = null;
     state.lastResultKey = progress.results?.[state.selected[state.index].id]
       ? `${state.selected[state.index].id}:${progress.results[state.selected[state.index].id].score}` : null;
-    if (progress.view === 'summary') renderSummary();
+    if (resumeSummary) renderSummary();
     else renderPractice();
   }
 
