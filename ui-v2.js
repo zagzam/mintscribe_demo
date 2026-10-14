@@ -66,17 +66,20 @@ function wordIsCorrect(c, i) {
 }
 
 function hintAllowance() {
-  return state.practiceScope === 'all' ? 100 : state.selected.length * 5;
+  return state.practiceScope === 'all' ? Infinity : state.selected.length * 5;
 }
 
 function hintMarkup(c) {
   const words = wordTokens(c.text), h = hintState(c);
   state.hintIndex = Math.min(Math.max(0, state.hintIndex || 0), Math.max(0, words.length - 1));
   const i = state.hintIndex, word = words[i] || '', level = h.levels[i] || 0;
-  const correct = wordIsCorrect(c, i), remaining = Math.max(0, hintAllowance() - state.hintUsed);
+  const allowance = hintAllowance();
+  const correct = wordIsCorrect(c, i), remaining = Math.max(0, allowance - state.hintUsed);
+  const remainingLabel = Number.isFinite(allowance) ? remaining : '∞';
+  const allowanceLabel = Number.isFinite(allowance) ? allowance : '∞';
   const visible = correct ? esc((state.wordAnswers[c.id] || [])[i]) : level === 0 ? '＿'.repeat(Math.min(word.length, 14)) : level === 1 ? `<span class="system-letter">${esc(word[0])}</span>${'＿'.repeat(Math.min(word.length - 1, 13))}` : `<span class="system-letter">${esc(word)}</span>`;
   const nextHint = level === 0 ? (state.lang === 'ko' ? '첫 글자 보기' : 'Show first letter') : (state.lang === 'ko' ? 'AI 단어 보기' : 'Show AI word');
-  return `<div class="tool-intro"><span class="tool-kicker">${state.lang === 'ko' ? '막힌 단어를 선택하세요' : 'Select a word you need help with'}</span><strong>${state.lang === 'ko' ? '남은 세션 힌트' : 'Session hints left'} <em>${remaining}</em> / ${hintAllowance()}</strong></div>
+  return `<div class="tool-intro"><span class="tool-kicker">${state.lang === 'ko' ? '막힌 단어를 선택하세요' : 'Select a word you need help with'}</span><strong>${state.lang === 'ko' ? '남은 세션 힌트' : 'Session hints left'} <em>${remainingLabel}</em> / ${allowanceLabel}</strong></div>
     <div class="hint-word-list" aria-label="${state.lang === 'ko' ? '단어별 힌트' : 'Word hints'}">${words.map((w, n) => { const done = wordIsCorrect(c, n), reveal = h.levels[n] || 0; const label = done ? `✓ ${esc((state.wordAnswers[c.id] || [])[n])}` : reveal === 2 ? esc(w) : reveal === 1 ? `${esc(w[0])}${'·'.repeat(Math.min(w.length - 1, 10))}` : `${w.length} ${state.lang === 'ko' ? '글자' : 'letters'}`; return `<button data-action="hintSelect" data-index="${n}" class="hint-word ${n === i ? 'current' : ''} ${done ? 'correct' : reveal ? 'system-shown' : ''}" aria-label="${n + 1}: ${w.length} ${state.lang === 'ko' ? '글자' : 'letters'}"><small>${n + 1}</small><b>${label}</b></button>`; }).join('')}</div>
     <div class="hint-focus"><div><small>${state.lang === 'ko' ? `${i + 1}번 단어 · ${word.length}글자` : `Word ${i + 1} · ${word.length} letters`}</small><div class="hint-focus-word ${correct ? 'correct' : ''}">${visible}</div></div><button class="reveal-btn" data-action="reveal" ${correct || level >= 2 || !remaining ? 'disabled' : ''}>✦ ${correct ? (state.lang === 'ko' ? '직접 맞혔어요' : 'You got it') : level >= 2 ? (state.lang === 'ko' ? '단어 확인 완료' : 'Word revealed') : !remaining ? (state.lang === 'ko' ? '힌트를 모두 썼어요' : 'No hints left') : nextHint}</button></div>
     <p class="tool-note">✧ ${state.lang === 'ko' ? '초록색은 직접 맞힌 단어, 파란색은 AI 자막에서 보여 준 글자예요.' : 'Green shows your correct words; blue shows letters revealed from the AI transcript.'} ${t('aiNotice')}</p>`;
