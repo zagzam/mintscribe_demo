@@ -60,10 +60,31 @@ function normalizedWord(value) {
   return (tokensNorm(value)[0] || '').normalize('NFKC');
 }
 
+function wordIsRevealed(c, i) {
+  return (state.hints[c.id]?.levels?.[i] || 0) >= 2;
+}
+
 function wordIsCorrect(c, i) {
+  if (wordIsRevealed(c, i)) return false;
   const typed = (state.wordAnswers[c.id] || [])[i] || '';
   return Boolean(typed.trim() && normalizedWord(typed) === normalizedWord(wordTokens(c.text)[i] || ''));
 }
+
+checkAnswer = function () {
+  const c = current(), words = wordTokens(c.text), typed = state.wordAnswers[c.id] || [];
+  const answer = words.map((word, i) => wordIsRevealed(c, i) ? word : (typed[i] || '').trim()).join(' ').trim();
+  if (!answer) {
+    state.error = t('incomplete');
+    document.querySelector('.word-input:not(:disabled)')?.focus();
+    return;
+  }
+  state.answers[c.id] = answer;
+  const answerTokens = words.flatMap((_, i) => wordIsRevealed(c, i)
+    ? [`\u0000revealed-${i}`] : tokensNorm(typed[i] || ''));
+  state.results[c.id] = {score: similarityTokens(tokensNorm(c.text), answerTokens)};
+  stopAudio();
+  renderPractice();
+};
 
 function hintAllowance() {
   return state.practiceScope === 'all' ? Infinity : state.selected.length * 5;
@@ -87,7 +108,8 @@ function hintMarkup(c) {
 
 function reviewMarkup(c, result) {
   if (!result) return `<div class="empty-panel"><span>◎</span><b>${state.lang === 'ko' ? '받아쓰기를 확인하면 결과가 여기에 표시돼요.' : 'Check your transcription to see the result here.'}</b><p>${t('reviewCaveat')}</p></div>`;
-  return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${esc(c.text)}</p></div><p class="tool-note">✧ ${t('reviewCaveat')}</p>`;
+  const revealed = wordTokens(c.text).filter((_, i) => wordIsRevealed(c, i)).length;
+  return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${esc(c.text)}</p></div><p class="tool-note">✧ ${revealed ? (state.lang === 'ko' ? `AI가 공개한 단어 ${revealed}개는 정답으로 인정하지 않았어요. ` : `${revealed} AI-revealed word${revealed === 1 ? '' : 's'} received no credit. `) : ''}${t('reviewCaveat')}</p>`;
 }
 
 function scoreColor(score) {
@@ -110,7 +132,7 @@ function punctuatedStudentLine(c) {
   const output = [];
   let pending = source.slice(0, reference[0]?.index || 0).replace(/\s/g, '');
   reference.forEach((match, i) => {
-    const answer = (typed[i] || '').trim();
+    const answer = wordIsRevealed(c, i) ? match[0] : (typed[i] || '').trim();
     if (answer) {
       const clean = wordTokens(answer).join(' ');
       let word = clean;
@@ -193,9 +215,10 @@ function wordInputsMarkup(c) {
   const words = wordTokens(c.text), typed = state.wordAnswers[c.id] || [];
   const count = words.length;
   return `<div class="word-entry" id="wordEntry" role="group" aria-label="${t('write')}">${Array.from({length: count}, (_, i) => {
-    const word = words[i] || '', value = typed[i] || '', correct = word && wordIsCorrect(c, i);
+    const word = words[i] || '', revealed = wordIsRevealed(c, i);
+    const value = revealed ? word : typed[i] || '', correct = word && wordIsCorrect(c, i);
     const length = word.length;
-    return `<label class="word-slot ${correct ? 'correct' : ''}" style="--slot-width:${Math.min(Math.max(length, 3), 16)}ch"><span class="slot-number">${i + 1}</span><input class="word-input" data-index="${i}" type="text" value="${esc(value)}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${state.lang === 'ko' ? `${i + 1}번 단어, ${length}글자` : `Word ${i + 1}, ${length} letters`}" placeholder="${'·'.repeat(Math.min(length, 16))}"><span class="slot-length">${length} ${state.lang === 'ko' ? '글자' : 'letters'}</span></label>`;
+    return `<label class="word-slot ${revealed ? 'revealed' : correct ? 'correct' : ''}" style="--slot-width:${Math.min(Math.max(length, 3), 16)}ch"><span class="slot-number">${i + 1}</span><input class="word-input" data-index="${i}" type="text" value="${esc(value)}" autocomplete="off" autocapitalize="off" spellcheck="false" ${revealed ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? `${i + 1}번 단어, ${revealed ? 'AI 힌트로 공개됨' : `${length}글자`}` : `Word ${i + 1}, ${revealed ? 'revealed by AI hint' : `${length} letters`}`}" placeholder="${'·'.repeat(Math.min(length, 16))}"><span class="slot-length">${revealed ? (state.lang === 'ko' ? 'AI 힌트' : 'AI hint') : `${length} ${state.lang === 'ko' ? '글자' : 'letters'}`}</span></label>`;
   }).join('')}</div>`;
 }
 
@@ -272,6 +295,11 @@ async function restartCueAudio() {
 function bindWordInputs(c) {
   const entry = $('#wordEntry');
   const inputs = [...entry.querySelectorAll('.word-input')];
+  const focusEditable = (from, direction) => {
+    for (let i = from + direction; i >= 0 && i < inputs.length; i += direction) {
+      if (!inputs[i].disabled) { inputs[i].focus(); return; }
+    }
+  };
   const sync = () => {
     const typed = state.wordAnswers[c.id] || [];
     const answer = typed.join(' ').trim();
@@ -286,16 +314,17 @@ function bindWordInputs(c) {
       const typed = state.wordAnswers[c.id] || (state.wordAnswers[c.id] = []);
       const pieces = input.value.trim().split(/\s+/);
       if (pieces.length > 1) {
-        pieces.forEach((piece, offset) => { if (i + offset < inputs.length) { typed[i + offset] = piece; inputs[i + offset].value = piece; } });
-        inputs[Math.min(i + pieces.length, inputs.length - 1)].focus();
+        const targets = inputs.map((candidate, index) => !candidate.disabled && index >= i ? index : -1).filter(index => index >= 0);
+        pieces.forEach((piece, offset) => { const index = targets[offset]; if (index !== undefined) { typed[index] = piece; inputs[index].value = piece; } });
+        focusEditable(targets[Math.min(pieces.length, targets.length) - 1] ?? i, 1);
       } else typed[i] = input.value;
       sync();
     });
     input.addEventListener('keydown', event => {
-      if (event.key === ' ' && input.value.trim()) { event.preventDefault(); inputs[Math.min(i + 1, inputs.length - 1)].focus(); }
-      if (event.key === 'Backspace' && !input.value && i > 0) inputs[i - 1].focus();
-      if (event.key === 'ArrowRight' && input.selectionStart === input.value.length && i < inputs.length - 1) inputs[i + 1].focus();
-      if (event.key === 'ArrowLeft' && input.selectionStart === 0 && i > 0) inputs[i - 1].focus();
+      if (event.key === ' ' && input.value.trim()) { event.preventDefault(); focusEditable(i, 1); }
+      if (event.key === 'Backspace' && !input.value) focusEditable(i, -1);
+      if (event.key === 'ArrowRight' && input.selectionStart === input.value.length) focusEditable(i, 1);
+      if (event.key === 'ArrowLeft' && input.selectionStart === 0) focusEditable(i, -1);
     });
     input.addEventListener('focus', () => { state.hintIndex = Math.min(i, wordTokens(c.text).length - 1); if (state.panel === 'hint') { const content = $('.tool-content'); if (content) content.innerHTML = hintMarkup(c); } });
   });
@@ -316,8 +345,20 @@ app.addEventListener('click', event => {
   if (action === 'hintNext' && state.hintIndex < wordTokens(current().text).length - 1) { state.hintIndex++; renderPractice(); }
   if (action === 'hintSelect') { state.hintIndex = Number(button.dataset.index); renderPractice(); }
   if (action === 'reveal') {
-    const h = hintState(current()), i = state.hintIndex;
-    if (state.hintUsed < hintAllowance() && !wordIsCorrect(current(), i) && (h.levels[i] || 0) < 2) { h.levels[i] = (h.levels[i] || 0) + 1; h.uses++; state.hintUsed++; renderPractice(); }
+    const c = current(), h = hintState(c), i = state.hintIndex;
+    if (state.hintUsed < hintAllowance() && !wordIsCorrect(c, i) && (h.levels[i] || 0) < 2) {
+      h.levels[i] = (h.levels[i] || 0) + 1;
+      h.uses++;
+      state.hintUsed++;
+      if (h.levels[i] === 2) {
+        const typed = state.wordAnswers[c.id] || (state.wordAnswers[c.id] = []);
+        typed[i] = wordTokens(c.text)[i];
+        state.answers[c.id] = typed.join(' ').trim();
+        delete state.results[c.id];
+        state.lastResultKey = null;
+      }
+      renderPractice();
+    }
   }
 });
 

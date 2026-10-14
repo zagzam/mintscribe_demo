@@ -67,12 +67,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .word-slot{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;width:clamp(58px,calc(var(--slot-width) + 25px),165px);min-width:0;max-width:100%;padding:6px 7px 5px;background:#15233b;border:1px solid #334b69;border-radius:8px;transition:border-color .15s,background .15s}
 .word-slot:focus-within{border-color:#74d7ff;box-shadow:0 0 0 2px #65bfff29}
 .word-slot.correct{border-color:#46cc9c;background:#123b3a}
+.word-slot.revealed{border-color:#547da6;background:#19304a}
 .word-slot .slot-number{font-size:9px;color:#8096b8;font-weight:800}
 .word-slot .word-input{min-width:0;width:100%;border:0;outline:0;background:transparent;color:#f2f8ff;font-size:13px;font-weight:750;padding:1px 0;box-shadow:none}
 .word-slot.correct .word-input{color:#72f4c2}
+.word-slot.revealed .word-input{color:#83caff;-webkit-text-fill-color:#83caff;opacity:1;user-select:none;-webkit-user-select:none;cursor:default}
 .word-slot .word-input::placeholder{color:#627693;letter-spacing:1px;opacity:1}
 .slot-length{color:#a1b5cd;font-size:9px;white-space:nowrap}
 .word-slot.correct .slot-length{color:#72f4c2}
+.word-slot.revealed .slot-length,.word-slot.revealed .slot-number{color:#89c9ff}
 .hint-word-list{display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;max-height:44%;overflow:auto;margin:13px 0 10px;padding:1px;scrollbar-color:#35536a transparent}
 .hint-word{display:flex;align-items:center;gap:6px;min-height:32px;max-width:100%;border:1px solid #3a4b68;background:#17243c;color:#b8cce4;border-radius:8px;padding:5px 8px;text-align:left}
 .hint-word small{font-size:9px;opacity:.65}.hint-word b{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
