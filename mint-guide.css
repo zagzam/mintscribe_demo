@@ -100,6 +100,7 @@ html[data-theme="light"] .site-return:hover { background:#eef7ff; border-color:#
   box-shadow: 0 0 0 2px #0f91ff26;
 }
 .url-mode label, .scope-label { color: #444444; }
+.load-bottom .primary-btn { align-self: center; }
 .drop-zone { background: #fbfbfb; border: 1px dashed #c8c8c8; border-radius: 8px; }
 .drop-zone.drag { background: #eef7ff; border-color: #0f91ff; }
 .drop-zone p, .file-line span { color: #777777; }
@@ -180,12 +181,11 @@ html[data-theme="light"] .resume-clear { border-color:#e1e1e1; color:#444444; }
 .record-btn.recording { background:#fff2f2; border-color:#c24545; color:#9e3030; }
 .download-btn { border-color:#0f91ff; color:#0869bb; }
 .shadow-placeholder:first-letter { color:#0f91ff; }
-/* NEEDS_DESIGN_REVIEW: pronunciation scores retain the prototype's inferred red-to-blue scale. */
 .score-flow { gap: 5px 12px; padding: 5px 0; }
 .score-word { display:inline-flex; flex-direction:column; gap:2px; padding:3px 0; border:0; border-radius:0; background:transparent; box-shadow:none; }
 .score-word b { color:var(--tone); font-size:13px; line-height:1.25; }
 .score-word small { color:#777777; font-size:9px; font-weight:600; }
-.legend-gradient { background:linear-gradient(90deg,#c24545 0%,#995dba 50%,#0f91ff 100%); }
+.legend-gradient { background:linear-gradient(90deg,#777777 0%,#0f91ff 100%); }
 .legend-labels .pass-label, .legend-labels span:nth-child(2) { color:#0869bb; }
 .summary-v2-head h1, .summary-compact b { color: #242424; }
 .summary-v2 .footnote { color: #777777; }

@@ -113,12 +113,9 @@ function reviewMarkup(c, result) {
 }
 
 function scoreColor(score) {
-  // NEEDS_DESIGN_REVIEW: only the blue endpoint is a verified Mint color.
-  const stops = [[194, 69, 69], [153, 93, 186], [15, 145, 255]];
+  const gray = [119, 119, 119], blue = [15, 145, 255];
   const value = Math.max(0, Math.min(100, score));
-  const segment = value < 50 ? 0 : 1;
-  const fraction = (value - segment * 50) / 50;
-  return `rgb(${stops[segment].map((channel, i) => Math.round(channel + (stops[segment + 1][i] - channel) * fraction)).join(' ')})`;
+  return `rgb(${gray.map((channel, i) => Math.round(channel + (blue[i] - channel) * value / 100)).join(' ')})`;
 }
 
 function shadowMarkup(c) {
