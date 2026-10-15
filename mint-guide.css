@@ -144,11 +144,12 @@ html[data-theme="light"] .resume-clear { border-color:#e1e1e1; color:#444444; }
 .word-slot { background: #ffffff; }
 .word-slot .slot-number, .slot-length { color: #777777; }
 .word-slot .word-input { color: #242424; }
-.word-slot.correct { background: #f3f3f3; border-color: #b7b7b7; }
-.word-slot.correct .word-input, .word-slot.correct .slot-length { color: #333333; }
-.word-slot.revealed { background: #eef7ff; border-color: #0f91ff; }
+.word-slot.correct { background: #eef7ff; border-color: #0f91ff; }
+.word-slot.correct .word-input, .word-slot.correct .slot-length,
+.word-slot.correct .slot-number { color: #0869bb; }
+.word-slot.revealed { background: #f3f3f3; border-color: #b7b7b7; }
 .word-slot.revealed .word-input, .word-slot.revealed .slot-length,
-.word-slot.revealed .slot-number { color: #0869bb; -webkit-text-fill-color: #0869bb; }
+.word-slot.revealed .slot-number { color: #333333; -webkit-text-fill-color: #333333; }
 
 .tool-kicker, .hint-focus-word, .empty-panel b, .review-reference p,
 .summary-compact b { color: #242424; }
@@ -159,11 +160,11 @@ html[data-theme="light"] .resume-clear { border-color:#e1e1e1; color:#444444; }
 .hint-word, .hint-focus, .review-reference, .shadow-placeholder,
 .summary-export { background: #ffffff; border-color: #e1e1e1; border-radius: 8px; color: #444444; box-shadow: none; }
 .hint-word.current { border-color: #0f91ff; box-shadow: 0 0 0 1px #0f91ff; }
-.hint-word.correct { background: #f3f3f3; border-color: #b7b7b7; color: #333333; }
-.hint-word.system-shown { background: #eef7ff; border-color: #0f91ff; color: #0869bb; }
+.hint-word.correct { background: #eef7ff; border-color: #0f91ff; color: #0869bb; }
+.hint-word.system-shown { background: #f3f3f3; border-color: #b7b7b7; color: #333333; }
 .hint-focus { background: #fbfbfb; }
-.hint-focus-word.correct { color:#333333; }
-.system-letter { color: #0f91ff; text-shadow: none; }
+.hint-focus-word.correct { color:#0869bb; }
+.system-letter { color: #777777; text-shadow: none; }
 .reveal-btn, .hint-focus .reveal-btn, .score-trigger {
   background: #eef7ff; border: 1px solid #0f91ff; border-radius: 8px;
   color: #0869bb; box-shadow: none;
@@ -179,7 +180,11 @@ html[data-theme="light"] .resume-clear { border-color:#e1e1e1; color:#444444; }
 .record-btn.recording { background:#fff2f2; border-color:#c24545; color:#9e3030; }
 .download-btn { border-color:#0f91ff; color:#0869bb; }
 .shadow-placeholder:first-letter { color:#0f91ff; }
-.score-word { background:color-mix(in srgb,var(--tone) 9%,#ffffff); border-color:#e1e1e1; border-bottom:3px solid var(--tone); color:#242424; box-shadow:none; }
+/* NEEDS_DESIGN_REVIEW: pronunciation scores retain the prototype's inferred red-to-blue scale. */
+.score-flow { gap: 5px 12px; padding: 5px 0; }
+.score-word { display:inline-flex; flex-direction:column; gap:2px; padding:3px 0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+.score-word b { color:var(--tone); font-size:13px; line-height:1.25; }
+.score-word small { color:#777777; font-size:9px; font-weight:600; }
 .legend-gradient { background:linear-gradient(90deg,#c24545 0%,#995dba 50%,#0f91ff 100%); }
 .legend-labels .pass-label, .legend-labels span:nth-child(2) { color:#0869bb; }
 .summary-v2-head h1, .summary-compact b { color: #242424; }
@@ -231,16 +236,22 @@ html[data-theme="dark"] .player, html[data-theme="dark"] .story-steps span {
   background:#303030; border-color:#555555; color:#f4f4f4;
 }
 html[data-theme="dark"] .word-slot .word-input { color:#f4f4f4; }
-html[data-theme="dark"] .word-slot.correct, html[data-theme="dark"] .hint-word.correct { background:#363636; border-color:#777777; color:#f4f4f4; }
+html[data-theme="dark"] .word-slot.correct, html[data-theme="dark"] .hint-word.correct { background:#253c50; border-color:#0f91ff; color:#7dc5ff; }
 html[data-theme="dark"] .word-slot.correct .word-input,
 html[data-theme="dark"] .word-slot.correct .slot-length,
-html[data-theme="dark"] .hint-focus-word.correct { color:#f4f4f4; }
-html[data-theme="dark"] .word-slot.revealed, html[data-theme="dark"] .hint-word.system-shown { background:#253c50; border-color:#0f91ff; }
+html[data-theme="dark"] .word-slot.correct .slot-number,
+html[data-theme="dark"] .hint-focus-word.correct { color:#7dc5ff; }
+html[data-theme="dark"] .word-slot.revealed, html[data-theme="dark"] .hint-word.system-shown { background:#363636; border-color:#777777; color:#f4f4f4; }
+html[data-theme="dark"] .word-slot.revealed .word-input,
+html[data-theme="dark"] .word-slot.revealed .slot-length,
+html[data-theme="dark"] .word-slot.revealed .slot-number { color:#f4f4f4; -webkit-text-fill-color:#f4f4f4; }
+html[data-theme="dark"] .system-letter { color:#c0c0c0; }
 html[data-theme="dark"] .demo-badge { background:#363636; color:#c0c0c0; }
 html[data-theme="dark"] .record-btn { background:#253c50; border-color:#0f91ff; color:#7dc5ff; }
 html[data-theme="dark"] .record-btn.recording { background:#432b2b; border-color:#c24545; color:#ffc2c2; }
 html[data-theme="dark"] .download-btn { border-color:#0f91ff; color:#7dc5ff; }
-html[data-theme="dark"] .score-word { background:color-mix(in srgb,var(--tone) 13%,#303030); border-color:#555555; border-bottom-color:var(--tone); color:#f4f4f4; }
+html[data-theme="dark"] .score-word { background:transparent; border:0; }
+html[data-theme="dark"] .score-word small { color:#c0c0c0; }
 html[data-theme="dark"] .review-ring strong { background:#292929; color:#f4f4f4; }
 html[data-theme="dark"] .summary-details .summary-list { background:transparent; color:#f4f4f4; }
 html[data-theme="dark"] .resume-card { background:#303030; border-color:#555555; color:#f4f4f4; }
