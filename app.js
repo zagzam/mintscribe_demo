@@ -19,20 +19,12 @@ function parseTranscript(text, format){
  const blocks=text.replace(/^\uFEFF/,'').replace(/\r/g,'').split(/\n\s*\n/), cues=[];
  for(const block of blocks){const lines=block.trim().split('\n');const ti=lines.findIndex(x=>/-->/.test(x));if(ti<0)continue;
   const m=lines[ti].match(/(\d{1,2}:\d{2}(?::\d{2})?[.,]\d+)\s*-->\s*(\d{1,2}:\d{2}(?::\d{2})?[.,]\d+)/);if(!m)continue;
-  const raw=lines.slice(ti+1).join(' ').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();const sm=raw.match(/^([^:]{1,80}):\s*(.*)$/);if(!sm&&format!=='vtt')continue;
-  const speaker=sm?sm[1].trim():'',content=sm?sm[2].trim():raw;if(!content)continue;
+  const raw=lines.slice(ti+1).join(' ').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();const sm=raw.match(/^([^:]{1,80}):\s*(.*)$/);if(!sm)continue;
+  const speaker=sm[1].trim(),content=sm[2].trim();if(!content)continue;
   const student=format==='txt'?/^\d+$/.test(speaker):/\sST$/i.test(speaker);
   cues.push({id:cues.length+1,start:parseTime(m[1]),end:parseTime(m[2]),speaker,text:content,student});
  }
- const valid=cues.filter(c=>c.end>c.start);
- if(format==='vtt'){
-  const speakers=new Set(valid.filter(c=>c.speaker).map(c=>c.speaker.normalize('NFKC').replace(/\s+/g,' ').trim().toLowerCase()));
-  if(speakers.size<=1){
-   const teacher=valid.find(c=>c.speaker)?.speaker||'Teacher';
-   return valid.map(c=>({...c,speaker:c.speaker||teacher,student:false}));
-  }
- }
- return valid.filter(c=>c.speaker&&!c.student);
+ return cues.filter(c=>!c.student&&c.end>c.start);
 }
 const sampleText=`WEBVTT\n\n1\n00:00:01.000 --> 00:00:05.500\nTeacher: How was your weekend? Did you go anywhere interesting?\n\n2\n00:00:06.000 --> 00:00:09.000\nStudent ST: I stayed at home.\n\n3\n00:00:09.200 --> 00:00:15.800\nTeacher: Sometimes a quiet weekend is exactly what we need before a busy week.\n\n4\n00:00:16.000 --> 00:00:22.800\nTeacher: Let us look at three expressions you can use when you make a phone call.\n\n5\n00:00:23.000 --> 00:00:27.900\nStudent ST: Okay, I am ready.\n\n6\n00:00:28.000 --> 00:00:33.900\nTeacher: The first expression is, may I speak to the person in charge?\n\n7\n00:00:34.200 --> 00:00:43.000\nTeacher: If someone is not available, you can ask when a convenient time to call back would be.\n\n8\n00:00:43.200 --> 00:00:48.900\nTeacher: Please make your own sentence using the expression we just practiced.`;
 function shell(content){
