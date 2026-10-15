@@ -103,7 +103,7 @@ function hintMarkup(c) {
   return `<div class="tool-intro"><span class="tool-kicker">${state.lang === 'ko' ? '막힌 단어를 선택하세요' : 'Select a word you need help with'}</span><strong>${state.lang === 'ko' ? '남은 세션 힌트' : 'Session hints left'} <em>${remainingLabel}</em> / ${allowanceLabel}</strong></div>
     <div class="hint-word-list" aria-label="${state.lang === 'ko' ? '단어별 힌트' : 'Word hints'}">${words.map((w, n) => { const done = wordIsCorrect(c, n), reveal = h.levels[n] || 0; const label = done ? `✓ ${esc((state.wordAnswers[c.id] || [])[n])}` : reveal === 2 ? esc(w) : reveal === 1 ? `${esc(w[0])}${'·'.repeat(Math.min(w.length - 1, 10))}` : `${w.length} ${state.lang === 'ko' ? '글자' : 'letters'}`; return `<button data-action="hintSelect" data-index="${n}" class="hint-word ${n === i ? 'current' : ''} ${done ? 'correct' : reveal ? 'system-shown' : ''}" aria-label="${n + 1}: ${w.length} ${state.lang === 'ko' ? '글자' : 'letters'}"><small>${n + 1}</small><b>${label}</b></button>`; }).join('')}</div>
     <div class="hint-focus"><div><small>${state.lang === 'ko' ? `${i + 1}번 단어 · ${word.length}글자` : `Word ${i + 1} · ${word.length} letters`}</small><div class="hint-focus-word ${correct ? 'correct' : ''}">${visible}</div></div><button class="reveal-btn" data-action="reveal" ${correct || level >= 2 || !remaining ? 'disabled' : ''}>✦ ${correct ? (state.lang === 'ko' ? '직접 맞혔어요' : 'You got it') : level >= 2 ? (state.lang === 'ko' ? '단어 확인 완료' : 'Word revealed') : !remaining ? (state.lang === 'ko' ? '힌트를 모두 썼어요' : 'No hints left') : nextHint}</button></div>
-    <p class="tool-note">✧ ${state.lang === 'ko' ? '초록색은 직접 맞힌 단어, 파란색은 AI 자막에서 보여 준 글자예요.' : 'Green shows your correct words; blue shows letters revealed from the AI transcript.'} ${t('aiNotice')}</p>`;
+    <p class="tool-note">✧ ${state.lang === 'ko' ? '체크 표시는 직접 맞힌 단어, 파란색은 AI 자막에서 보여 준 글자예요.' : 'A check mark shows words you got right; blue shows letters revealed from the AI transcript.'} ${t('aiNotice')}</p>`;
 }
 
 function reviewMarkup(c, result) {
@@ -113,7 +113,12 @@ function reviewMarkup(c, result) {
 }
 
 function scoreColor(score) {
-  return `hsl(${Math.round(score * 2.2)} 92% 66%)`;
+  // NEEDS_DESIGN_REVIEW: only the blue endpoint is a verified Mint color.
+  const stops = [[194, 69, 69], [153, 93, 186], [15, 145, 255]];
+  const value = Math.max(0, Math.min(100, score));
+  const segment = value < 50 ? 0 : 1;
+  const fraction = (value - segment * 50) / 50;
+  return `rgb(${stops[segment].map((channel, i) => Math.round(channel + (stops[segment + 1][i] - channel) * fraction)).join(' ')})`;
 }
 
 function shadowMarkup(c) {
