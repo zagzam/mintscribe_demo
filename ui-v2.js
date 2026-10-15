@@ -113,7 +113,7 @@ function reviewMarkup(c, result) {
 }
 
 function scoreColor(score) {
-  const gray = [119, 119, 119], blue = [15, 145, 255];
+  const gray = [153, 153, 153], blue = [15, 145, 255];
   const value = Math.max(0, Math.min(100, score));
   return `rgb(${gray.map((channel, i) => Math.round(channel + (blue[i] - channel) * value / 100)).join(' ')})`;
 }

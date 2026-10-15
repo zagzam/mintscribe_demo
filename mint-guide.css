@@ -185,7 +185,7 @@ html[data-theme="light"] .resume-clear { border-color:#e1e1e1; color:#444444; }
 .score-word { display:inline-flex; flex-direction:column; gap:2px; padding:3px 0; border:0; border-radius:0; background:transparent; box-shadow:none; }
 .score-word b { color:var(--tone); font-size:13px; line-height:1.25; }
 .score-word small { color:#777777; font-size:9px; font-weight:600; }
-.legend-gradient { background:linear-gradient(90deg,#777777 0%,#0f91ff 100%); }
+.legend-gradient { background:linear-gradient(90deg,#999999 0%,#0f91ff 100%); }
 .legend-labels .pass-label, .legend-labels span:nth-child(2) { color:#0869bb; }
 .summary-v2-head h1, .summary-compact b { color: #242424; }
 .summary-v2 .footnote { color: #777777; }
