@@ -8,7 +8,7 @@
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
     brightStyles.disabled = dark;
-    browserTheme.content = dark ? '#080d1d' : '#f5f8f8';
+    browserTheme.content = dark ? '#202020' : '#f7f7f7';
     if (save) {
       try { localStorage.setItem(storageKey, dark ? 'dark' : 'light'); } catch (_) { /* Storage can be unavailable. */ }
     }
@@ -17,13 +17,13 @@
     if (button) {
       const korean = document.documentElement.lang === 'ko';
       const action = korean
-        ? (dark ? '라이트 모드로 전환' : '다크 네온 모드로 전환')
-        : (dark ? 'Switch to bright mode' : 'Switch to dark neon mode');
+        ? (dark ? '라이트 모드로 전환' : '다크 모드로 전환')
+        : (dark ? 'Switch to bright mode' : 'Switch to dark mode');
       button.setAttribute('aria-label', action);
       button.title = action;
       button.querySelector('span').textContent = korean
-        ? (dark ? '다크 네온' : '라이트')
-        : (dark ? 'Dark neon' : 'Bright');
+        ? (dark ? '다크' : '라이트')
+        : (dark ? 'Dark' : 'Bright');
     }
   }
 

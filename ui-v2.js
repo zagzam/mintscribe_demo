@@ -159,18 +159,18 @@ function summaryExportMarkup() {
   const title = state.lang === 'ko' ? '나의 수업 받아쓰기' : 'My class transcription';
   const lines = state.selected.map((c, i) => {
     const sentence = punctuatedStudentLine(c);
-    return `<p style="display:flex;gap:14px;align-items:baseline;margin:0;padding:13px 0;border-bottom:1px solid #dfe9ee;color:#183047;font:500 16px/1.7 Arial,sans-serif;"><span style="flex:none;color:#608292;font:700 11px/1.7 Arial,sans-serif;">${String(i + 1).padStart(2, '0')}</span><span>${sentence ? esc(sentence) : `<em style="color:#93a7b3;">${state.lang === 'ko' ? '미작성' : 'Not transcribed'}</em>`}</span></p>`;
+    return `<p style="display:flex;gap:14px;align-items:baseline;margin:0;padding:13px 0;border-bottom:1px solid #E1E1E1;color:#242424;font:500 16px/1.7 Pretendard,Arial,sans-serif;"><span style="flex:none;color:#777777;font:700 11px/1.7 Pretendard,Arial,sans-serif;">${String(i + 1).padStart(2, '0')}</span><span>${sentence ? esc(sentence) : `<em style="color:#999999;">${state.lang === 'ko' ? '미작성' : 'Not transcribed'}</em>`}</span></p>`;
   }).join('');
-  return `<section style="background:#ffffff;border:1px solid #d9e9ef;border-radius:20px;padding:clamp(20px,3vw,34px);box-shadow:0 14px 34px #081b2d12;">
-    <div style="color:#348a91;font:800 11px/1.4 Arial,sans-serif;letter-spacing:1.5px;">MINTSCRIBE 2.0 · TRANSCRIPT</div>
-    <h2 style="color:#142d41;font:800 26px/1.35 Arial,sans-serif;margin:7px 0 4px;">${title}</h2>
-    <p style="color:#607b8a;font:400 12px/1.6 Arial,sans-serif;margin:0 0 14px;">${state.lang === 'ko' ? '직접 받아쓴 문장 · 구두점과 대문자는 AI 자막을 참고해 정리했어요.' : 'Your words, with punctuation and capitalization guided by the AI transcript.'}</p>
+  return `<section style="background:#ffffff;border:1px solid #E1E1E1;border-radius:8px;padding:clamp(20px,3vw,34px);">
+    <div style="color:#0F91FF;font:700 11px/1.4 Pretendard,Arial,sans-serif;letter-spacing:1.5px;">MINTSCRIBE 2.0 · TRANSCRIPT</div>
+    <h2 style="color:#242424;font:700 26px/1.35 Pretendard,Arial,sans-serif;margin:7px 0 4px;">${title}</h2>
+    <p style="color:#777777;font:400 12px/1.6 Pretendard,Arial,sans-serif;margin:0 0 14px;">${state.lang === 'ko' ? '직접 받아쓴 문장 · 구두점과 대문자는 AI 자막을 참고해 정리했어요.' : 'Your words, with punctuation and capitalization guided by the AI transcript.'}</p>
     <div>${lines}</div>
   </section>
-  <aside style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;background:linear-gradient(120deg,#ffffff,#f4f7f9);border:1px solid #d7e0e7;border-top:3px solid #54d7bd;border-radius:16px;padding:17px 19px;margin-top:14px;box-shadow:0 8px 24px #14283a12;font-family:Arial,sans-serif;color:#243748;">
-    <div style="width:44px;height:44px;flex:none;display:grid;place-items:center;background:linear-gradient(145deg,#12263b,#21475a);border-radius:13px;color:#8ff5df;font-size:24px;box-shadow:0 5px 12px #17324630;">✦</div>
-    <div style="flex:1;min-width:160px;"><div style="font-size:10px;font-weight:800;color:#468f8b;letter-spacing:1px;">수업을 다시 듣는 새로운 방법</div><div style="font-size:15px;font-weight:800;margin:3px 0;color:#182c3c;">MintScribe 2.0 (베타)으로 받아썼어요</div><div style="font-size:12px;line-height:1.5;color:#657684;">듣고, 쓰고, 내 것으로 만드는 수업 복습</div></div>
-    <a href="https://zagzam.github.io/mintscribe_demo/" target="_blank" rel="noopener noreferrer" style="display:inline-block;flex:none;background:#20384b;border-radius:9px;padding:9px 12px;color:#ffffff;font-size:11px;font-weight:800;text-decoration:none;white-space:nowrap;">MintScribe 2.0 (베타) 써보기 ↗</a>
+  <aside style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;background:#ffffff;border:1px solid #E1E1E1;border-radius:8px;padding:17px 19px;margin-top:14px;font-family:Pretendard,Arial,sans-serif;color:#242424;">
+    <div style="width:44px;height:44px;flex:none;display:grid;place-items:center;background:#0F91FF;border-radius:8px;color:#ffffff;font-size:24px;">✦</div>
+    <div style="flex:1;min-width:160px;"><div style="font-size:10px;font-weight:700;color:#777777;letter-spacing:1px;">수업을 다시 듣는 새로운 방법</div><div style="font-size:15px;font-weight:700;margin:3px 0;color:#242424;">MintScribe 2.0 (베타)으로 받아썼어요</div><div style="font-size:12px;line-height:1.5;color:#777777;">듣고, 쓰고, 내 것으로 만드는 수업 복습</div></div>
+    <a href="https://zagzam.github.io/mintscribe_demo/" target="_blank" rel="noopener noreferrer" style="display:inline-block;flex:none;background:#0F91FF;border-radius:8px;padding:9px 12px;color:#ffffff;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;">MintScribe 2.0 (베타) 써보기 ↗</a>
   </aside>`;
 }
 
