@@ -100,7 +100,9 @@ html[data-theme="light"] .site-return:hover { background:#eef7ff; border-color:#
   box-shadow: 0 0 0 2px #0f91ff26;
 }
 .url-mode label, .scope-label { color: #444444; }
-.load-bottom .primary-btn { align-self: center; }
+.load-bottom .primary-btn { align-self: end; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.load-bottom .primary-btn span { display: inline-flex; align-items: center; line-height: 1; margin-left: 0; }
+.load-bottom #scope:disabled { cursor: not-allowed; opacity: 1; background: #f7f7f7; color: #444444; }
 .drop-zone { background: #fbfbfb; border: 1px dashed #c8c8c8; border-radius: 8px; }
 .drop-zone.drag { background: #eef7ff; border-color: #0f91ff; }
 .drop-zone p, .file-line span { color: #777777; }
@@ -236,6 +238,7 @@ html[data-theme="dark"] .player, html[data-theme="dark"] .story-steps span {
   background:#303030; border-color:#555555; color:#f4f4f4;
 }
 html[data-theme="dark"] .word-slot .word-input { color:#f4f4f4; }
+html[data-theme="dark"] .load-bottom #scope:disabled { background:#303030; color:#c0c0c0; }
 html[data-theme="dark"] .word-slot.correct, html[data-theme="dark"] .hint-word.correct { background:#253c50; border-color:#0f91ff; color:#7dc5ff; }
 html[data-theme="dark"] .word-slot.correct .word-input,
 html[data-theme="dark"] .word-slot.correct .slot-length,
