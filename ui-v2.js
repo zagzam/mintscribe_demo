@@ -294,6 +294,56 @@ async function restartCueAudio() {
   } catch (error) { alert(error.message); }
 }
 
+let keyboardBaselineHeight = window.visualViewport?.height || window.innerHeight;
+let keyboardFocusTimer;
+
+function keepFocusedWordVisible() {
+  const input = document.activeElement;
+  const viewport = window.visualViewport;
+  if (!input?.classList.contains('word-input') || !viewport) {
+    document.documentElement.classList.remove('keyboard-open');
+    document.documentElement.style.removeProperty('--keyboard-inset');
+    keyboardBaselineHeight = viewport?.height || window.innerHeight;
+    return;
+  }
+  const visibleBottom = viewport.offsetTop + viewport.height;
+  const covered = Math.max(0, Math.max(window.innerHeight, document.documentElement.clientHeight) - visibleBottom);
+  const shrink = Math.max(0, keyboardBaselineHeight - viewport.height);
+  if (Math.max(covered, shrink) < 120) {
+    if (document.documentElement.classList.contains('keyboard-open')) {
+      document.documentElement.classList.remove('keyboard-open');
+      document.documentElement.style.removeProperty('--keyboard-inset');
+      keyboardBaselineHeight = viewport.height;
+    }
+    return;
+  }
+  document.documentElement.style.setProperty('--keyboard-inset', `${Math.ceil(Math.max(covered, shrink))}px`);
+  document.documentElement.classList.add('keyboard-open');
+  requestAnimationFrame(() => {
+    if (document.activeElement !== input) return;
+    const rect = input.closest('.word-slot').getBoundingClientRect();
+    const viewportTop = viewport.offsetTop;
+    const viewportBottom = viewport.offsetTop + viewport.height;
+    if (rect.bottom > viewportBottom - 24) window.scrollBy(0, rect.bottom - viewportBottom + 24);
+    else if (rect.top < viewportTop + 16) window.scrollBy(0, rect.top - viewportTop - 16);
+  });
+}
+
+document.addEventListener('focusin', event => {
+  if (!event.target.classList?.contains('word-input')) return;
+  clearTimeout(keyboardFocusTimer);
+  keepFocusedWordVisible();
+  keyboardFocusTimer = setTimeout(keepFocusedWordVisible, 350);
+});
+document.addEventListener('focusout', event => {
+  if (!event.target.classList?.contains('word-input')) return;
+  clearTimeout(keyboardFocusTimer);
+  keyboardFocusTimer = setTimeout(keepFocusedWordVisible, 150);
+});
+window.visualViewport?.addEventListener('resize', keepFocusedWordVisible);
+window.visualViewport?.addEventListener('scroll', keepFocusedWordVisible);
+window.addEventListener('resize', keepFocusedWordVisible);
+
 function bindWordInputs(c) {
   const entry = $('#wordEntry');
   const inputs = [...entry.querySelectorAll('.word-input')];

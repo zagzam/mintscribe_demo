@@ -17,6 +17,17 @@ html[data-theme="light"] .resume-card{background:#eaf7f1;border-color:#b7dbcc;co
 .missing-audio{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:9px 0;padding:10px;border:1px solid #7fa9a5;border-radius:10px;background:#19353a;color:#e3f5f2;font-size:11px;line-height:1.5}.missing-audio .secondary-btn{flex:none}.storage-warning{position:fixed;z-index:20;left:50%;bottom:18px;transform:translateX(-50%);max-width:min(620px,calc(100vw - 30px));padding:11px 15px;border:1px solid #e1ab57;border-radius:10px;background:#fff2dc;color:#583b1e;box-shadow:0 8px 25px #0003;font-size:12px;line-height:1.5}
 html[data-theme="light"] .missing-audio{background:#eef8f4;border-color:#b7dacc;color:#2a4c4a}
 
+/* Allow the focused word to scroll above an overlaid mobile keyboard. */
+html.keyboard-open .practice-page{padding-bottom:calc(24px + var(--keyboard-inset,0px))}
+@media(min-width:761px) and (min-height:701px){
+ html.keyboard-open,html.keyboard-open body,html.keyboard-open #app,html.keyboard-open .app-shell{height:auto;min-height:100%;overflow-x:hidden}
+ html.keyboard-open body{overflow-y:auto;-webkit-overflow-scrolling:touch}
+ html.keyboard-open .practice-page{height:auto;overflow:visible}
+ html.keyboard-open .workbench{flex:none;min-height:0;align-items:start}
+ html.keyboard-open .listen-surface,html.keyboard-open .insight-surface{height:auto;overflow:visible}
+ html.keyboard-open .word-entry{flex:none;overflow:visible}
+}
+
 /* Keep the keyboard scrolling fix in both color modes. */
 @media(max-width:760px),(max-height:700px){
  html,body,#app,.app-shell{height:auto;min-height:100%;overflow-x:hidden}
