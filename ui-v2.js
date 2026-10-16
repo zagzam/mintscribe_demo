@@ -220,7 +220,7 @@ function wordInputsMarkup(c) {
     const word = words[i] || '', revealed = wordIsRevealed(c, i);
     const value = revealed ? word : typed[i] || '', correct = word && wordIsCorrect(c, i);
     const length = word.length;
-    return `<label class="word-slot ${revealed ? 'revealed' : correct ? 'correct' : ''}" style="--slot-width:${Math.min(Math.max(length, 3), 16)}ch"><span class="slot-number">${i + 1}</span><input class="word-input" data-index="${i}" type="text" value="${esc(value)}" autocomplete="off" autocapitalize="off" spellcheck="false" ${revealed ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? `${i + 1}번 단어, ${revealed ? 'AI 힌트로 공개됨' : `${length}글자`}` : `Word ${i + 1}, ${revealed ? 'revealed by AI hint' : `${length} letters`}`}" placeholder="${'·'.repeat(Math.min(length, 16))}"><span class="slot-length">${revealed ? (state.lang === 'ko' ? 'AI 힌트' : 'AI hint') : `${length} ${state.lang === 'ko' ? '글자' : 'letters'}`}</span></label>`;
+    return `<label class="word-slot ${revealed ? 'revealed' : correct ? 'correct' : ''}" style="--slot-width:${Math.min(Math.max(length, 3), 16)}ch"><span class="slot-number">${i + 1}</span><input class="word-input" data-index="${i}" type="text" value="${esc(value)}" autocomplete="off" autocapitalize="off" spellcheck="false" ${revealed || correct ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? `${i + 1}번 단어, ${revealed ? 'AI 힌트로 공개됨' : correct ? '정답' : `${length}글자`}` : `Word ${i + 1}, ${revealed ? 'revealed by AI hint' : correct ? 'correct' : `${length} letters`}`}" placeholder="${'·'.repeat(Math.min(length, 16))}"><span class="slot-length">${revealed ? (state.lang === 'ko' ? 'AI 힌트' : 'AI hint') : `${length} ${state.lang === 'ko' ? '글자' : 'letters'}`}</span></label>`;
   }).join('')}</div>`;
 }
 
@@ -237,13 +237,13 @@ function renderPractice() {
   shell(`<main class="page practice-page">
     <div class="practice-head"><div><div class="eyebrow">${t('session')} / ${esc(state.textName)}</div><h1>${t('teacherLine')} <span>${state.index + 1} <i>/ ${state.selected.length}</i></span></h1></div><div class="head-buttons"><button class="ghost-btn" data-action="home">← <span>${t('back')}</span></button><button class="ghost-btn" data-action="summary">${t('summary')} ↗</button></div></div>
     <div class="session-strip"><div class="session-progress"><span>${t('progress')} <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('activeTime')}</small><b id="timeValue">${mmss(state.seconds)}</b></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.results).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>${t('pass')}</small><b>${Object.values(state.results).filter(x => x.score >= 80).length}/${state.selected.length}</b></div></div>
-    <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><span class="cue-label">CAPTION ${String(state.index + 1).padStart(2, '0')} / ${String(state.selected.length).padStart(2, '0')}</span><h2>${esc(c.speaker)}</h2></div><div class="cue-navigation"><button data-action="prev" aria-label="Previous caption" ${state.index === 0 ? 'disabled' : ''}>←</button><select id="cueJump" aria-label="${t('items')}">${state.selected.map((x, i) => `<option value="${i}" ${i === state.index ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${mmss(x.start)}</option>`).join('')}</select><button data-action="next" aria-label="Next caption">→</button></div></div>
+    <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><span class="cue-label">CAPTION ${String(state.index + 1).padStart(2, '0')} / ${String(state.selected.length).padStart(2, '0')}</span><h2>${esc(c.speaker)}</h2></div><div class="cue-navigation"><select id="cueJump" aria-label="${t('items')}">${state.selected.map((x, i) => `<option value="${i}" ${i === state.index ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${mmss(x.start)}</option>`).join('')}</select></div></div>
       <div class="cue-time">${mmss(c.start)} — ${mmss(c.end)} <span>·</span> ${duration(c)} <span>·</span> ${wordTokens(c.text).length} ${t('words')}</div>
       <div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><button class="restart-button" data-action="restartAudio" ${state.sample ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}" title="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}">⏮</button><input class="seek-bar" id="seekBar" type="range" min="${c.start}" max="${c.end}" step="0.01" value="${c.start}" style="--seek-pct:0%" aria-label="${state.lang === 'ko' ? '재생 위치' : 'Playback position'}" aria-valuetext="${mmss(c.start)}" ${state.sample ? 'disabled' : ''}><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div>
       <div class="play-options"><button class="pill-btn ${state.loop ? 'active' : ''}" data-action="loop" aria-pressed="${state.loop}">↺ ${t('loop')}</button><select id="speed" class="speed-select" aria-label="${t('slow')}"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option></select><button class="pill-btn timer-pill ${state.paused ? '' : 'active'}" data-action="timer">${state.paused ? t('timerResume') : t('timerPause')}</button></div>
       ${state.sample ? `<div class="sample-note">${t('sampleNoAudio')}</div>` : ''}
       <div class="write-label"><span>${t('write')}</span><small>${state.lang === 'ko' ? '단어 아래 글자 수를 보고 입력하세요' : 'Use the letter count below each word'}</small></div>${wordInputsMarkup(c)}<textarea id="answer" class="hidden" tabindex="-1" aria-hidden="true">${esc(state.answers[c.id] || '')}</textarea>
-      <div class="write-actions"><span class="ai-caution">✦ AI STT ${state.lang === 'ko' ? '기준' : 'reference'}</span><div><button class="secondary-btn" data-action="check">${t('check')}</button><button class="primary-btn" data-action="next">${state.index === state.selected.length - 1 ? t('finish') : t('next')} →</button></div></div>
+      <div class="write-actions"><div class="caption-actions"><button class="secondary-btn" data-action="prev" ${state.index === 0 ? 'disabled' : ''}>← ${state.lang === 'ko' ? '이전 자막' : 'Previous'}</button><button class="secondary-btn" data-action="check">${t('check')}</button><button class="primary-btn" data-action="next">${state.index === state.selected.length - 1 ? t('finish') : t('next')} →</button></div><span class="ai-caution">✦ AI STT ${state.lang === 'ko' ? '기준' : 'reference'}</span></div>
     </section><section class="insight-surface"><div class="tool-tabs" role="tablist" aria-label="Practice tools"><button class="compact-write-tab" role="tab" data-action="toolClose">✎ ${state.lang === 'ko' ? '받아쓰기' : 'Write'}</button><button role="tab" data-action="panel" data-panel="hint" aria-selected="${panel === 'hint'}" class="${panel === 'hint' ? 'active' : ''}">✧ ${state.lang === 'ko' ? '힌트' : 'Hints'}</button><button role="tab" data-action="panel" data-panel="review" aria-selected="${panel === 'review'}" class="${panel === 'review' ? 'active' : ''}">◎ ${state.lang === 'ko' ? '확인' : 'Review'}${result ? '<i></i>' : ''}</button><button role="tab" data-action="panel" data-panel="shadow" aria-selected="${panel === 'shadow'}" class="${panel === 'shadow' ? 'active' : ''}">◉ ${state.lang === 'ko' ? '따라 말하기' : 'Shadowing'}</button></div><div class="tool-content">${panel === 'hint' ? hintMarkup(c) : panel === 'review' ? reviewMarkup(c, result) : shadowMarkup(c)}</div></section></div>
     <audio id="sourceAudio" src="${esc(state.audioUrl || '')}" preload="metadata"></audio>
   </main>`);
@@ -353,6 +353,7 @@ window.addEventListener('resize', scheduleKeyboardViewportCheck);
 function bindWordInputs(c) {
   const entry = $('#wordEntry');
   const inputs = [...entry.querySelectorAll('.word-input')];
+  const words = wordTokens(c.text);
   const focusEditable = (from, direction) => {
     for (let i = from + direction; i >= 0 && i < inputs.length; i += direction) {
       if (!inputs[i].disabled) { inputs[i].focus(); return; }
@@ -363,21 +364,53 @@ function bindWordInputs(c) {
     const answer = typed.join(' ').trim();
     $('#answer').value = answer;
     state.answers[c.id] = answer;
-    inputs.forEach((input, i) => input.closest('.word-slot').classList.toggle('correct', wordIsCorrect(c, i)));
+    inputs.forEach((input, i) => {
+      const correct = wordIsCorrect(c, i);
+      input.closest('.word-slot').classList.toggle('correct', correct);
+      input.disabled = wordIsRevealed(c, i) || correct;
+    });
     if (state.panel === 'hint') { const content = $('.tool-content'); if (content) content.innerHTML = hintMarkup(c); }
     state.lastActive = Date.now();
   };
   inputs.forEach((input, i) => {
-    input.addEventListener('input', () => {
+    const handleInput = event => {
+      if (event.isComposing) return;
       const typed = state.wordAnswers[c.id] || (state.wordAnswers[c.id] = []);
       const pieces = input.value.trim().split(/\s+/);
       if (pieces.length > 1) {
         const targets = inputs.map((candidate, index) => !candidate.disabled && index >= i ? index : -1).filter(index => index >= 0);
         pieces.forEach((piece, offset) => { const index = targets[offset]; if (index !== undefined) { typed[index] = piece; inputs[index].value = piece; } });
         focusEditable(targets[Math.min(pieces.length, targets.length) - 1] ?? i, 1);
-      } else typed[i] = input.value;
+        sync();
+        return;
+      }
+      let remaining = input.value;
+      let position = i;
+      let lastCorrect = -1;
+      while (remaining && position < inputs.length) {
+        if (inputs[position].disabled) { position++; continue; }
+        const candidate = remaining.slice(0, words[position].length);
+        if (!candidate || normalizedWord(candidate) !== normalizedWord(words[position])) break;
+        typed[position] = candidate;
+        inputs[position].value = candidate;
+        remaining = remaining.slice(candidate.length);
+        lastCorrect = position;
+        position++;
+      }
+      if (remaining && position < inputs.length) {
+        typed[position] = remaining;
+        inputs[position].value = remaining;
+      } else if (lastCorrect < 0) {
+        typed[i] = input.value;
+      }
+      if (lastCorrect >= 0) {
+        if (remaining && position < inputs.length && !inputs[position].disabled) inputs[position].focus();
+        else focusEditable(lastCorrect, 1);
+      }
       sync();
-    });
+    };
+    input.addEventListener('input', handleInput);
+    input.addEventListener('compositionend', handleInput);
     input.addEventListener('keydown', event => {
       if (event.key === ' ' && input.value.trim()) { event.preventDefault(); focusEditable(i, 1); }
       if (event.key === 'Backspace' && !input.value) focusEditable(i, -1);

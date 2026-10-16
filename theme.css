@@ -79,3 +79,26 @@ html.keyboard-open .practice-page{padding-bottom:calc(110px + var(--keyboard-ins
  .listen-surface,.insight-surface{padding:16px}.insight-surface{padding:0}
  .word-entry{min-height:180px}.tool-content{padding:16px}
 }
+
+/* Keep the two destinations explicit and the caption time readable. */
+html .topbar .brand{border:0;background:transparent;padding:0;text-align:left;cursor:pointer}
+html .topbar .brand:hover{color:var(--green)}
+html .cue-bar>div:first-child{min-width:0;flex:1}
+html .cue-bar h2{max-width:100%}
+html .cue-navigation{flex:none}
+html .cue-navigation select{width:136px;max-width:none;min-width:0;font-size:13px}
+html .write-actions .caption-actions{display:flex;gap:7px}
+html .write-actions .caption-actions button{white-space:nowrap}
+html .word-slot.correct .word-input:disabled{opacity:1;cursor:default;-webkit-text-fill-color:currentColor}
+html .word-slot.correct{user-select:none}
+@media(max-width:760px){
+ html .topbar{height:auto;min-height:55px;flex-wrap:wrap;row-gap:5px;padding-top:5px;padding-bottom:5px}
+ html .topbar .top-actions{margin-left:auto}
+ html .site-return{width:auto;min-height:32px;padding:5px 8px}
+ html .site-return span{display:inline}
+ html .cue-navigation select{width:145px;font-size:16px}
+ html .write-actions{flex-direction:column;align-items:stretch}
+ html .write-actions .caption-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:100%}
+ html .write-actions .caption-actions button{min-width:0;padding:8px 4px}
+ html .write-actions .ai-caution{align-self:flex-end}
+}
