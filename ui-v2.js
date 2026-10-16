@@ -325,9 +325,11 @@ function keepFocusedWordVisible() {
     const rect = input.closest('.word-slot').getBoundingClientRect();
     const viewportTop = viewport.offsetTop;
     const viewportBottom = viewport.offsetTop + viewport.height;
+    const playerRect = document.querySelector('.listen-surface .player')?.getBoundingClientRect();
+    const topLimit = playerRect && playerRect.top <= viewportTop + 32 ? playerRect.bottom + 12 : viewportTop + 16;
     const bottomMargin = Math.max(72, Math.min(110, viewport.height * 0.12));
     if (rect.bottom > viewportBottom - bottomMargin) window.scrollBy(0, rect.bottom - viewportBottom + bottomMargin);
-    else if (rect.top < viewportTop + 16) window.scrollBy(0, rect.top - viewportTop - 16);
+    else if (rect.top < topLimit) window.scrollBy(0, rect.top - topLimit);
   });
 }
 

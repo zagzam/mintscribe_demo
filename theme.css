@@ -91,6 +91,14 @@ html .write-actions .caption-actions{display:flex;gap:7px}
 html .write-actions .caption-actions button{white-space:nowrap}
 html .word-slot.correct .word-input:disabled{opacity:1;cursor:default;-webkit-text-fill-color:currentColor}
 html .word-slot.correct{user-select:none}
+@media(max-width:760px),(max-height:700px){
+ html,body,#app,.app-shell{overflow-x:clip}
+ body{overflow-y:visible}
+ html .practice-page .listen-surface .player{position:sticky;top:calc(env(safe-area-inset-top) + 8px);z-index:5;box-shadow:0 8px 22px #10182726}
+}
+html.keyboard-open,html.keyboard-open body,html.keyboard-open #app,html.keyboard-open .app-shell{overflow-x:clip}
+html.keyboard-open body{overflow-y:visible}
+html.keyboard-open .practice-page .listen-surface .player{position:sticky;top:calc(env(safe-area-inset-top) + 8px);z-index:5;box-shadow:0 8px 22px #10182726}
 @media(max-width:760px){
  html .topbar{height:auto;min-height:55px;flex-wrap:wrap;row-gap:5px;padding-top:5px;padding-bottom:5px}
  html .topbar .top-actions{margin-left:auto}
