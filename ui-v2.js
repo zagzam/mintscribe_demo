@@ -296,6 +296,7 @@ async function restartCueAudio() {
 
 let keyboardBaselineHeight = window.visualViewport?.height || window.innerHeight;
 let keyboardFocusTimer;
+let keyboardViewportTimer;
 
 function keepFocusedWordVisible() {
   const input = document.activeElement;
@@ -324,25 +325,30 @@ function keepFocusedWordVisible() {
     const rect = input.closest('.word-slot').getBoundingClientRect();
     const viewportTop = viewport.offsetTop;
     const viewportBottom = viewport.offsetTop + viewport.height;
-    if (rect.bottom > viewportBottom - 24) window.scrollBy(0, rect.bottom - viewportBottom + 24);
+    const bottomMargin = Math.max(72, Math.min(110, viewport.height * 0.12));
+    if (rect.bottom > viewportBottom - bottomMargin) window.scrollBy(0, rect.bottom - viewportBottom + bottomMargin);
     else if (rect.top < viewportTop + 16) window.scrollBy(0, rect.top - viewportTop - 16);
   });
+}
+
+function scheduleKeyboardViewportCheck() {
+  clearTimeout(keyboardViewportTimer);
+  keyboardViewportTimer = setTimeout(keepFocusedWordVisible, 140);
 }
 
 document.addEventListener('focusin', event => {
   if (!event.target.classList?.contains('word-input')) return;
   clearTimeout(keyboardFocusTimer);
   keepFocusedWordVisible();
-  keyboardFocusTimer = setTimeout(keepFocusedWordVisible, 350);
+  keyboardFocusTimer = setTimeout(keepFocusedWordVisible, 450);
 });
 document.addEventListener('focusout', event => {
   if (!event.target.classList?.contains('word-input')) return;
   clearTimeout(keyboardFocusTimer);
   keyboardFocusTimer = setTimeout(keepFocusedWordVisible, 150);
 });
-window.visualViewport?.addEventListener('resize', keepFocusedWordVisible);
-window.visualViewport?.addEventListener('scroll', keepFocusedWordVisible);
-window.addEventListener('resize', keepFocusedWordVisible);
+window.visualViewport?.addEventListener('resize', scheduleKeyboardViewportCheck);
+window.addEventListener('resize', scheduleKeyboardViewportCheck);
 
 function bindWordInputs(c) {
   const entry = $('#wordEntry');

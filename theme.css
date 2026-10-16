@@ -18,7 +18,8 @@ html[data-theme="light"] .resume-card{background:#eaf7f1;border-color:#b7dbcc;co
 html[data-theme="light"] .missing-audio{background:#eef8f4;border-color:#b7dacc;color:#2a4c4a}
 
 /* Allow the focused word to scroll above an overlaid mobile keyboard. */
-html.keyboard-open .practice-page{padding-bottom:calc(24px + var(--keyboard-inset,0px))}
+html.keyboard-open{scroll-behavior:auto}
+html.keyboard-open .practice-page{padding-bottom:calc(110px + var(--keyboard-inset,0px))}
 @media(min-width:761px) and (min-height:701px){
  html.keyboard-open,html.keyboard-open body,html.keyboard-open #app,html.keyboard-open .app-shell{height:auto;min-height:100%;overflow-x:hidden}
  html.keyboard-open body{overflow-y:auto;-webkit-overflow-scrolling:touch}
