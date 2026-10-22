@@ -177,7 +177,7 @@ function hintMarkup(c) {
   const remainingLabel = Number.isFinite(allowance) ? remaining : '∞';
   const allowanceLabel = Number.isFinite(allowance) ? allowance : '∞';
   const visible = correct ? esc((state.wordAnswers[c.id] || [])[i]) : level === 0 ? '＿'.repeat(Math.min(word.length, 14)) : level === 1 ? `<span class="system-letter">${esc(word[0])}</span>${'＿'.repeat(Math.min(word.length - 1, 13))}` : `<span class="system-letter">${esc(word)}</span>`;
-  const nextHint = level === 0 ? (state.lang === 'ko' ? '첫 글자 보기' : 'Show first letter') : (state.lang === 'ko' ? 'AI 단어 보기' : 'Show AI word');
+  const nextHint = word.length === 1 ? (state.lang === 'ko' ? '단어 전체 보여주기' : 'Show whole word') : level === 0 ? (state.lang === 'ko' ? '첫 글자 보기' : 'Show first letter') : (state.lang === 'ko' ? 'AI 단어 보기' : 'Show AI word');
   return `<div class="tool-intro"><span class="tool-kicker">${state.lang === 'ko' ? '막힌 단어를 선택하세요' : 'Select a word you need help with'}</span><strong>${state.lang === 'ko' ? '남은 세션 힌트' : 'Session hints left'} <em>${remainingLabel}</em> / ${allowanceLabel}</strong></div>
     <div class="hint-word-list" aria-label="${state.lang === 'ko' ? '단어별 힌트' : 'Word hints'}">${words.map((w, n) => { const done = wordIsCorrect(c, n), reveal = h.levels[n] || 0; const label = done ? `✓ ${esc((state.wordAnswers[c.id] || [])[n])}` : reveal === 2 ? esc(w) : reveal === 1 ? `${esc(w[0])}${'·'.repeat(Math.min(w.length - 1, 10))}` : `${w.length} ${state.lang === 'ko' ? '글자' : 'letters'}`; return `<button data-action="hintSelect" data-index="${n}" class="hint-word ${n === i ? 'current' : ''} ${done ? 'correct' : reveal ? 'system-shown' : ''}" aria-label="${n + 1}: ${w.length} ${state.lang === 'ko' ? '글자' : 'letters'}"><small>${n + 1}</small><b>${label}</b></button>`; }).join('')}</div>
     <div class="hint-focus"><div><small>${state.lang === 'ko' ? `${i + 1}번 단어 · ${word.length}글자` : `Word ${i + 1} · ${word.length} letters`}</small><div class="hint-focus-word ${correct ? 'correct' : ''}">${visible}</div></div><button class="reveal-btn" data-action="reveal" ${correct || level >= 2 || !remaining ? 'disabled' : ''}>✦ ${correct ? (state.lang === 'ko' ? '직접 맞혔어요' : 'You got it') : level >= 2 ? (state.lang === 'ko' ? '단어 확인 완료' : 'Word revealed') : !remaining ? (state.lang === 'ko' ? '힌트를 모두 썼어요' : 'No hints left') : nextHint}</button></div>
@@ -572,7 +572,7 @@ app.addEventListener('click', event => {
   if (action === 'reveal') {
     const c = current(), h = hintState(c), i = state.hintIndex;
     if (state.hintUsed < hintAllowance() && !wordIsCorrect(c, i) && (h.levels[i] || 0) < 2) {
-      h.levels[i] = (h.levels[i] || 0) + 1;
+      h.levels[i] = wordTokens(c.text)[i]?.length === 1 ? 2 : (h.levels[i] || 0) + 1;
       h.uses++;
       state.hintUsed++;
       if (h.levels[i] === 2) {
