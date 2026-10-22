@@ -1,0 +1,16 @@
+.submission-card{margin:24px 0;padding:24px;border:1px solid var(--line);border-radius:16px;background:var(--white);color:var(--ink)}
+.submission-card h2{margin:0 0 10px;font-size:20px;line-height:1.4}
+.submission-card p{margin:8px 0;color:var(--muted);font-size:14px;line-height:1.7;overflow-wrap:anywhere}
+.submission-card .submission-anonymous{display:flex;align-items:center;gap:10px;width:fit-content;min-height:44px;margin-top:12px;font-size:15px;font-weight:700;cursor:pointer}
+.submission-card .submission-anonymous input{width:20px;height:20px;margin:0;accent-color:var(--green);flex:none}
+.submission-card .submission-help{font-size:13px}
+.submission-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:18px}
+.submission-home{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.submission-home[hidden]{display:none}
+.submission-card .submission-guidance{margin-top:10px}
+.submission-guidance:empty{display:none}
+.submission-status{margin-top:12px;font-size:14px;line-height:1.7;overflow-wrap:anywhere}
+.submission-status:empty{display:none}
+.submission-status.error{color:#c23c3c}
+html[data-theme="dark"] .submission-status.error{color:#ff9c9c}
+@media(max-width:600px){.submission-card{padding:18px}.submission-actions .primary-btn,.submission-actions .submission-home{width:100%}}

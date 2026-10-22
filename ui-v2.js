@@ -20,6 +20,7 @@ resetSession = function () {
   state.lastResultKey = null;
   state.wordAnswers = {};
   state.hintUsed = 0;
+  state.practiceNotice = null;
 };
 
 const baseStartLocal = startLocal, baseStartUrls = startUrls;
@@ -34,8 +35,11 @@ startUrls = function () {
 
 function renderHome() {
   state.view = 'home';
+  const integrated = window.MintScribeLaunch.isIntegration;
   const filesSelected = Boolean(state.audioFile && state.textFile);
-  const mode = state.loadTab || 'files';
+  const mode = integrated ? 'url' : state.loadTab || 'files';
+  const linkError = integrated && window.MintScribeLaunch.status !== 'ready'
+    ? launchErrorMessage() : '';
   shell(`<main class="page home-page">
     <section class="home-story">
       <div class="eyebrow">MINTSCRIBE 2.0 / LISTENING LAB</div>
@@ -46,15 +50,33 @@ function renderHome() {
     </section>
     <section class="load-panel neon-load">
       <div class="load-head"><div><div class="eyebrow">START HERE</div><h2>${t('loadTitle')}</h2><p>${t('loadBody')}</p></div><span class="load-number">01</span></div>
-      <div class="load-switch" role="tablist" aria-label="${t('loadTitle')}"><button data-action="loadTab" data-tab="files" role="tab" aria-selected="${mode === 'files'}" class="${mode === 'files' ? 'active' : ''}">⇧ ${state.lang === 'ko' ? '파일 선택' : 'Local files'}</button><button data-action="loadTab" data-tab="url" role="tab" aria-selected="${mode === 'url'}" class="${mode === 'url' ? 'active' : ''}">⌁ URL</button></div>
-      ${mode === 'files' ? `<div class="load-mode"><div id="drop" class="drop-zone"><div class="upload-icon">⇧</div><strong>${t('dropTitle')}</strong><p>${t('dropBody')}</p><div class="file-buttons"><button class="secondary-btn" data-action="audioPick">♪ ${t('audioFile')}</button><button class="secondary-btn" data-action="textPick">≡ ${t('transcriptFile')}</button></div></div><input id="audioInput" class="hidden" type="file" accept=".m4a,.mp3,audio/*"><input id="textInput" class="hidden" type="file" accept=".vtt,.txt,text/plain,text/vtt"><div class="file-status"><div class="file-line"><b>♪ ${esc(state.audioFile?.name || '—')}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(state.textFile?.name || '—')}</b><span>TEXT</span></div></div></div>` : `<div class="load-mode url-mode"><label>${t('audioUrl')}<input class="text-input" id="audioUrl" type="url" placeholder="https://…/class.m4a" value="${esc(state.audioUrlInput || '')}"></label><label>${t('textUrl')}<input class="text-input" id="textUrl" type="url" placeholder="https://…/class.vtt" value="${esc(state.textUrlInput || '')}"></label><p class="helper">${t('cors')}</p></div>`}
-      <div class="load-bottom"><div><label class="scope-label" for="scope">${t('choosePractice')}</label>${scopeSelect()}</div><button class="primary-btn" data-action="${mode === 'files' ? 'start' : 'urlLoad'}" ${mode === 'files' && !filesSelected ? 'disabled' : ''}>${t('start')} <span>↗</span></button></div>
-      ${state.error ? `<div class="notice error" role="alert">${esc(state.error)}</div>` : ''}
+      ${integrated ? '' : `<div class="load-switch" role="tablist" aria-label="${t('loadTitle')}"><button data-action="loadTab" data-tab="files" role="tab" aria-selected="${mode === 'files'}" class="${mode === 'files' ? 'active' : ''}">⇧ ${state.lang === 'ko' ? '파일 선택' : 'Local files'}</button><button data-action="loadTab" data-tab="url" role="tab" aria-selected="${mode === 'url'}" class="${mode === 'url' ? 'active' : ''}">⌁ URL</button></div>`}
+      ${integrated ? linkedClassMarkup() : mode === 'files' ? `<div class="load-mode"><div id="drop" class="drop-zone"><div class="upload-icon">⇧</div><strong>${t('dropTitle')}</strong><p>${t('dropBody')}</p><div class="file-buttons"><button class="secondary-btn" data-action="audioPick">♪ ${t('audioFile')}</button><button class="secondary-btn" data-action="textPick">≡ ${t('transcriptFile')}</button></div></div><input id="audioInput" class="hidden" type="file" accept=".m4a,.mp3,audio/*"><input id="textInput" class="hidden" type="file" accept=".vtt,.txt,text/plain,text/vtt"><div class="file-status"><div class="file-line"><b>♪ ${esc(state.audioFile?.name || '—')}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(state.textFile?.name || '—')}</b><span>TEXT</span></div></div></div>` : `<div class="load-mode url-mode"><label>${t('audioUrl')}<input class="text-input" id="audioUrl" type="url" placeholder="https://…/class.m4a" value="${esc(state.audioUrlInput || '')}"></label><label>${t('textUrl')}<input class="text-input" id="textUrl" type="url" placeholder="https://…/class.vtt" value="${esc(state.textUrlInput || '')}"></label><p class="helper">${t('cors')}</p></div>`}
+      <div class="load-bottom"><div><label class="scope-label" for="scope">${t('choosePractice')}</label>${scopeSelect()}</div><button class="primary-btn" data-action="${mode === 'files' ? 'start' : 'urlLoad'}" ${state.loadingUrls || linkError || (mode === 'files' && !filesSelected) ? 'disabled' : ''}>${state.loadingUrls ? (state.lang === 'ko' ? '불러오는 중…' : 'Loading…') : t('start')} <span>↗</span></button></div>
+      ${state.error || linkError ? `<div class="notice error" role="alert">${esc(state.error || linkError)}</div>` : ''}
       <div class="load-footer"><span>${t('offline')}</span></div>
     </section>
   </main>`);
-  if (mode === 'files') bindHome();
+  if (!integrated && mode === 'files') bindHome();
 }
+
+function linkedClassMarkup() {
+  const launch = window.MintScribeLaunch;
+  const name = value => {
+    try { return decodeURIComponent(new URL(value, location.href).pathname.split('/').pop()) || '—'; }
+    catch (_) { return '—'; }
+  };
+  return `<div class="load-mode"><p class="helper">${state.lang === 'ko' ? '민트 홈페이지에서 연결된 수업입니다. 음원과 자막은 변경할 수 없습니다.' : 'This class was opened from the Mint website. Its recording and transcript cannot be changed.'}</p><div class="file-status"><div class="file-line"><b>♪ ${esc(name(launch.audioUrl))}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(name(launch.transcriptUrl))}</b><span>TEXT</span></div></div></div>`;
+}
+
+document.addEventListener('click', event => {
+  if (!window.MintScribeLaunch.isIntegration) return;
+  const action = event.target.closest('[data-action]')?.dataset.action;
+  if (!['loadTab', 'audioPick', 'textPick', 'start', 'sample', 'chooseResumeAudio'].includes(action)) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  console.warn('[MintScribe][02/load] 연동 수업의 자료 변경을 차단했습니다.', {action});
+}, true);
 
 function normalizedWord(value) {
   return (tokensNorm(value)[0] || '').normalize('NFKC');
@@ -70,18 +92,74 @@ function wordIsCorrect(c, i) {
   return Boolean(typed.trim() && normalizedWord(typed) === normalizedWord(wordTokens(c.text)[i] || ''));
 }
 
+function cueHasAnswer(c) {
+  const typed = state.wordAnswers[c.id] || [];
+  return wordTokens(c.text).some((_, i) => wordIsRevealed(c, i) || wordTokens(String(typed[i] || '')).length > 0);
+}
+
+function cueAnswerSignature(c) {
+  const typed = state.wordAnswers[c.id] || [];
+  return JSON.stringify(wordTokens(c.text).map((word, i) => {
+    const revealed = wordIsRevealed(c, i);
+    return [revealed ? word : String(typed[i] || '').trim(), revealed];
+  }));
+}
+
+function cueIsComplete(c) {
+  const result = state.results[c.id];
+  // Old checkpoints have no signature; keep their nonempty checked answers usable.
+  return Boolean(result && cueHasAnswer(c)
+    && (result.checkedAnswer === undefined || result.checkedAnswer === cueAnswerSignature(c)));
+}
+
+function isPracticeComplete() {
+  return state.selected.length > 0 && state.selected.every(cueIsComplete);
+}
+
+progressPercent = function () {
+  return state.selected.length ? Math.round(state.selected.filter(cueIsComplete).length / state.selected.length * 100) : 0;
+};
+
+function invalidateCueCheck(c, reason) {
+  state.practiceNotice = null;
+  if (!state.results[c.id]) return;
+  delete state.results[c.id];
+  state.lastResultKey = null;
+  console.info('[MintScribe][04/completion] 수정한 구간은 다시 확인해야 합니다.', {caption:state.index + 1,reason});
+}
+
+function practiceNoticeMarkup() {
+  const notice = state.practiceNotice;
+  if (!notice || notice.cueId !== current()?.id) return '';
+  const ko = state.lang === 'ko';
+  const message = notice.code === 'EMPTY_ANSWER'
+    ? (ko ? '한 단어 이상 입력하거나 AI 단어를 공개한 뒤 확인하기를 눌러 주세요.' : 'Enter at least one word or reveal an AI word, then check your answer.')
+    : (ko ? `아직 확인하지 않은 구간이 ${notice.remaining}개 있습니다. ${state.index + 1}번 구간부터 확인해 주세요. 오답이나 일부 빈칸이 있어도 괜찮습니다.` : `${notice.remaining} caption(s) still need checking. Start with caption ${state.index + 1}. Incorrect words and some blanks are allowed.`);
+  return `<div id="practiceNotice" class="notice error" role="alert" tabindex="-1">${esc(message)}</div>`;
+}
+
 checkAnswer = function () {
   const c = current(), words = wordTokens(c.text), typed = state.wordAnswers[c.id] || [];
   const answer = words.map((word, i) => wordIsRevealed(c, i) ? word : (typed[i] || '').trim()).join(' ').trim();
-  if (!answer) {
-    state.error = t('incomplete');
-    document.querySelector('.word-input:not(:disabled)')?.focus();
+  if (!cueHasAnswer(c)) {
+    invalidateCueCheck(c, 'empty_answer');
+    state.practiceNotice = {code:'EMPTY_ANSWER',cueId:c.id};
+    console.warn('[MintScribe][04/completion] 빈 구간은 완료할 수 없습니다.', {caption:state.index + 1});
+    stopAudio();
+    renderPractice();
+    $('#practiceNotice')?.focus();
     return;
   }
+  state.practiceNotice = null;
+  state.error = '';
   state.answers[c.id] = answer;
   const answerTokens = words.flatMap((_, i) => wordIsRevealed(c, i)
     ? [`\u0000revealed-${i}`] : tokensNorm(typed[i] || ''));
-  state.results[c.id] = {score: similarityTokens(tokensNorm(c.text), answerTokens)};
+  state.results[c.id] = {score: similarityTokens(tokensNorm(c.text), answerTokens),checkedAnswer:cueAnswerSignature(c)};
+  console.info('[MintScribe][04/completion] 구간 확인 완료', {
+    caption:state.index + 1,score:state.results[c.id].score,
+    completed:state.selected.filter(cueIsComplete).length,total:state.selected.length
+  });
   stopAudio();
   renderPractice();
 };
@@ -178,6 +256,22 @@ function summaryExportMarkup() {
 
 function renderSummary() {
   stopAudio();
+  if (!state.selected.length) { renderHome(); return; }
+  if (!isPracticeComplete()) {
+    const unfinished = state.selected.filter(c => !cueIsComplete(c));
+    state.index = state.selected.findIndex(c => !cueIsComplete(c));
+    state.practiceNotice = {code:'SUMMARY_BLOCKED',cueId:current().id,remaining:unfinished.length};
+    console.warn('[MintScribe][04/completion] 요약 진입 차단', {
+      firstUnfinished:state.index + 1,remaining:unfinished.length,total:state.selected.length
+    });
+    renderPractice();
+    const notice = $('#practiceNotice');
+    notice?.focus({preventScroll:true});
+    notice?.scrollIntoView({block:'center'});
+    return;
+  }
+  state.practiceNotice = null;
+  console.info('[MintScribe][04/completion] 모든 구간 확인 완료, 요약 진입', {total:state.selected.length});
   state.view = 'summary';
   const done = Object.keys(state.results).length;
   const rows = state.selected.map((c, i) => `<div class="summary-row"><span>${String(i + 1).padStart(2, '0')} · ${mmss(c.start)}</span><span>${state.results[c.id] ? state.results[c.id].score + '%' : '—'}</span></div>`).join('');
@@ -186,9 +280,11 @@ function renderSummary() {
     <div id="exportView" class="summary-export">${summaryExportMarkup()}</div>
     <div class="summary-compact"><div><small>${t('totalTime')}</small><b>${mmss(state.seconds)}</b></div><div><small>${t('completed')}</small><b>${done} / ${state.selected.length}</b></div><div><small>${t('avg')}</small><b>${done ? avgScore() + '%' : '—'}</b></div></div>
     <details class="summary-details"><summary>${state.lang === 'ko' ? '문장별 점수 보기' : 'View scores by caption'}</summary><div class="summary-list">${rows}</div></details>
-    <div class="summary-v2-actions"><button class="secondary-btn" data-action="returnPractice">← ${state.lang === 'ko' ? '연습으로 돌아가기' : 'Back to practice'}</button><button class="secondary-btn" data-action="home">${t('newFiles')}</button><button class="primary-btn" data-action="restart">${t('restart')} →</button></div>
+    ${window.MintScribeSubmission.markup()}
+    <div class="summary-v2-actions"><button class="secondary-btn" data-action="returnPractice">← ${state.lang === 'ko' ? '연습으로 돌아가기' : 'Back to practice'}</button>${window.MintScribeLaunch.isIntegration ? '' : `<button class="secondary-btn" data-action="home">${t('newFiles')}</button>`}<button class="primary-btn" data-action="restart">${t('restart')} →</button></div>
     <p class="footnote">${t('reviewCaveat')}</p>
   </main>`);
+  window.MintScribeSubmission.syncUI();
 }
 
 async function copySummaryHtml() {
@@ -235,8 +331,9 @@ function renderPractice() {
   if (key && state.lastResultKey !== key) { state.panel = 'review'; state.compactToolOpen = true; state.lastResultKey = key; }
   const pct = progressPercent(), panel = state.panel || 'hint';
   shell(`<main class="page practice-page">
-    <div class="practice-head"><div><div class="eyebrow">${t('session')} / ${esc(state.textName)}</div><h1>${t('teacherLine')} <span>${state.index + 1} <i>/ ${state.selected.length}</i></span></h1></div><div class="head-buttons"><button class="ghost-btn" data-action="home">← <span>${t('back')}</span></button><button class="ghost-btn" data-action="summary">${t('summary')} ↗</button></div></div>
+    <div class="practice-head"><div><div class="eyebrow">${t('session')} / ${esc(state.textName)}</div><h1>${t('teacherLine')} <span>${state.index + 1} <i>/ ${state.selected.length}</i></span></h1></div><div class="head-buttons">${window.MintScribeLaunch.isIntegration ? '' : `<button class="ghost-btn" data-action="home">← <span>${t('back')}</span></button>`}<button class="ghost-btn" data-action="summary">${t('summary')} ↗</button></div></div>
     <div class="session-strip"><div class="session-progress"><span>${t('progress')} <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('activeTime')}</small><b id="timeValue">${mmss(state.seconds)}</b></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.results).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>${t('pass')}</small><b>${Object.values(state.results).filter(x => x.score >= 80).length}/${state.selected.length}</b></div></div>
+    ${practiceNoticeMarkup()}
     <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><span class="cue-label">CAPTION ${String(state.index + 1).padStart(2, '0')} / ${String(state.selected.length).padStart(2, '0')}</span><h2>${esc(c.speaker)}</h2></div><div class="cue-navigation"><select id="cueJump" aria-label="${t('items')}">${state.selected.map((x, i) => `<option value="${i}" ${i === state.index ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${mmss(x.start)}</option>`).join('')}</select></div></div>
       <div class="cue-time">${mmss(c.start)} — ${mmss(c.end)} <span>·</span> ${duration(c)} <span>·</span> ${wordTokens(c.text).length} ${t('words')}</div>
       <div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><button class="restart-button" data-action="restartAudio" ${state.sample ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}" title="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}">⏮</button><input class="seek-bar" id="seekBar" type="range" min="${c.start}" max="${c.end}" step="0.01" value="${c.start}" style="--seek-pct:0%" aria-label="${state.lang === 'ko' ? '재생 위치' : 'Playback position'}" aria-valuetext="${mmss(c.start)}" ${state.sample ? 'disabled' : ''}><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div>
@@ -249,8 +346,33 @@ function renderPractice() {
   </main>`);
   bindPractice();
   bindSeekBar(c);
+  bindAudioDiagnostics();
   bindWordInputs(c);
   $('#cueJump').addEventListener('change', event => { stopAudio(); state.index = Number(event.target.value); renderPractice(); });
+}
+
+function bindAudioDiagnostics() {
+  const audio = $('#sourceAudio');
+  audio.addEventListener('loadedmetadata', () => {
+    console.info('[MintScribe][02/audio] 음원 정보 수신', {duration:audio.duration,readyState:audio.readyState});
+  });
+  audio.addEventListener('playing', () => {
+    console.info('[MintScribe][02/audio] 음원 재생', {currentTime:audio.currentTime,readyState:audio.readyState});
+    document.querySelector('.audio-load-error')?.remove();
+  });
+  audio.addEventListener('error', () => {
+    const code = audio.error?.code || 0;
+    const message = audioLoadErrorMessage(code);
+    console.error('[MintScribe][02/audio] 음원 불러오기 실패', {code,networkState:audio.networkState,readyState:audio.readyState});
+    document.querySelector('.audio-load-error')?.remove();
+    const notice = document.createElement('div');
+    notice.className = 'notice error audio-load-error';
+    notice.setAttribute('role', 'alert');
+    notice.textContent = `${message} [AUDIO_${code}]`;
+    document.querySelector('.play-options')?.after(notice);
+    state.playing = false;
+    syncPlayButton();
+  });
 }
 
 function bindSeekBar(c) {
@@ -362,6 +484,8 @@ function bindWordInputs(c) {
     }
   };
   const sync = () => {
+    invalidateCueCheck(c, 'answer_changed');
+    $('#practiceNotice')?.remove();
     const typed = state.wordAnswers[c.id] || [];
     const answer = typed.join(' ').trim();
     $('#answer').value = answer;
@@ -372,6 +496,14 @@ function bindWordInputs(c) {
       input.disabled = wordIsRevealed(c, i) || correct;
     });
     if (state.panel === 'hint') { const content = $('.tool-content'); if (content) content.innerHTML = hintMarkup(c); }
+    if (state.panel === 'review') { const content = $('.tool-content'); if (content) content.innerHTML = reviewMarkup(c, null); }
+    document.querySelector('[data-panel="review"] i')?.remove();
+    const progress = $('.session-progress b'), fill = $('.session-progress .progress-fill');
+    if (progress) progress.textContent = `${progressPercent()}%`;
+    if (fill) fill.style.width = `${progressPercent()}%`;
+    const stats = document.querySelectorAll('.session-strip .strip-stat b');
+    if (stats[1]) stats[1].textContent = Object.keys(state.results).length ? `${avgScore()}%` : '—';
+    if (stats[2]) stats[2].textContent = `${Object.values(state.results).filter(result => result.score >= 80).length}/${state.selected.length}`;
     state.lastActive = Date.now();
   };
   inputs.forEach((input, i) => {
@@ -447,8 +579,7 @@ app.addEventListener('click', event => {
         const typed = state.wordAnswers[c.id] || (state.wordAnswers[c.id] = []);
         typed[i] = wordTokens(c.text)[i];
         state.answers[c.id] = typed.join(' ').trim();
-        delete state.results[c.id];
-        state.lastResultKey = null;
+        invalidateCueCheck(c, 'word_revealed');
       }
       renderPractice();
     }

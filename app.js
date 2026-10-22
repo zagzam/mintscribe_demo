@@ -43,10 +43,11 @@ function bindHome(){
  const drop=$('#drop');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');receiveFiles(e.dataTransfer.files)});
  $('#audioInput').addEventListener('change',e=>receiveFiles(e.target.files));$('#textInput').addEventListener('change',e=>receiveFiles(e.target.files));
 }
-function receiveFiles(files){for(const f of files){if(/\.(m4a|mp3)$/i.test(f.name))state.audioFile=f;if(/\.(vtt|txt)$/i.test(f.name))state.textFile=f}state.error='';renderHome()}
+function receiveFiles(files){if(window.MintScribeLaunch.isIntegration){console.warn('[MintScribe][02/load] 연동 수업의 파일 변경을 차단했습니다.');return}for(const f of files){if(/\.(m4a|mp3)$/i.test(f.name))state.audioFile=f;if(/\.(vtt|txt)$/i.test(f.name))state.textFile=f}state.error='';renderHome()}
 function resetSession(){state.index=0;state.answers={};state.results={};state.hints={};state.hintOpen=false;state.loop=false;state.playing=false;state.paused=false;state.seconds=0;state.cueSeconds={};state.demoScores=null;state.lastActive=0;if(state.recordUrl)URL.revokeObjectURL(state.recordUrl);state.recordUrl=null;state.recordBlob=null}
 function chooseCues(scope){const all=state.cues;if(scope==='all')return all.filter(c=>wordTokens(c.text).length >= (state.minWords ?? 4));const n=Number(scope);return [...all].sort((a,b)=>wordTokens(b.text).length-wordTokens(a.text).length || (b.end-b.start)-(a.end-a.start)).slice(0,n).sort((a,b)=>a.start-b.start)}
 async function startLocal(scope){
+ if(window.MintScribeLaunch.isIntegration)return;
  if(!state.audioFile||!state.textFile){state.error=t('selectBoth');renderHome();return}
  try{
   const ext=/\.txt$/i.test(state.textFile.name)?'txt':'vtt';
@@ -63,8 +64,131 @@ async function startLocal(scope){
   renderPractice();
  }catch(e){state.error=e.message||t('fileFail');renderHome()}
 }
-async function startUrls(){const au=$('#audioUrl').value.trim(),tu=$('#textUrl').value.trim();state.audioUrlInput=au;state.textUrlInput=tu;if(!au||!tu){state.error=t('selectBoth');renderHome();return}try{const response=await fetch(tu);if(!response.ok)throw new Error('HTTP '+response.status);const transcript=await response.text();const ext=/\.txt(?:[?#]|$)/i.test(tu)?'txt':'vtt';state.cues=parseTranscript(transcript,ext);if(!state.cues.length)throw new Error(t('noTeacher'));state.audioFile=null;state.textFile=null;state.audioUrl=au;state.textName=decodeURIComponent(new URL(tu,location.href).pathname.split('/').pop());state.sample=false;resetSession();state.selected=chooseCues($('#scope').value);if(!state.selected.length)throw new Error(state.lang==='ko'?'설정한 최소 단어 수에 맞는 선생님 구간이 없습니다. URL의 min_words 값을 낮춰 주세요.':'No teacher captions meet the minimum word count. Lower min_words in the URL.');renderPractice()}catch(e){state.error=`${t('urlFail')} ${e.message||''}`;renderHome()}}
-function startSample(){state.cues=parseTranscript(sampleText,'vtt');state.selected=state.cues;state.audioUrl=null;state.textName='sample.vtt';state.sample=true;resetSession();renderPractice()}
+function launchErrorMessage(){
+ const launch=window.MintScribeLaunch,ko=state.lang==='ko';
+ if(launch.missingRequired.includes('mode')||launch.invalidParameters?.includes('mode'))return ko
+  ? '접속 환경이 지정되지 않았거나 올바르지 않습니다. URL에 mode=dev(개발) 또는 mode=real(운영)이 필요합니다. 민트 홈페이지에서 수업을 다시 열어 주세요.'
+  : 'The environment is missing or invalid. The URL requires mode=dev or mode=real. Reopen this class from the Mint website.';
+ return ko
+  ? `수업 연결 정보가 부족합니다 (${launch.missingRequired.join(', ')}). 민트 홈페이지에서 수업을 다시 열어 주세요.`
+  : `Missing class link information (${launch.missingRequired.join(', ')}). Reopen this class from the Mint website.`;
+}
+
+function audioLoadErrorMessage(code){
+ const ko=state.lang==='ko';
+ const descriptions=ko
+  ? {1:'음원 불러오기가 중단되었습니다.',2:'음원을 불러오지 못했습니다. 네트워크와 파일 접근 권한을 확인해 주세요.',3:'음원을 해석하지 못했습니다. 파일 형식을 확인해 주세요.',4:'음원 주소가 잘못되었거나 지원하지 않는 파일입니다.'}
+  : {1:'Audio loading was aborted.',2:'Could not load the recording. Check your connection and file access.',3:'Could not decode the recording. Check its format.',4:'The recording URL is unavailable or its format is unsupported.'};
+ return descriptions[code]||(ko?'음원을 재생하지 못했습니다.':'Could not play the recording.');
+}
+
+function validateAudioSource(url){
+ return new Promise((resolve,reject)=>{
+  // Metadata only: never play audio while the learner is on the landing screen.
+  const probe=document.createElement('audio');
+  probe.preload='metadata';
+  let timer=null,settled=false;
+  const finish=(error)=>{
+   if(settled)return;
+   settled=true;
+   const duration=probe.duration;
+   clearTimeout(timer);
+   probe.removeEventListener('loadedmetadata',onMetadata);
+   probe.removeEventListener('error',onError);
+   probe.pause();
+   probe.removeAttribute('src');
+   probe.load();
+   if(error)reject(error);else resolve({duration});
+  };
+  const onMetadata=()=>finish();
+  const onError=()=>{
+   const error=new Error('Audio metadata validation failed');
+   error.mediaCode=probe.error?.code||0;
+   error.code=`AUDIO_${error.mediaCode}`;
+   finish(error);
+  };
+  probe.addEventListener('loadedmetadata',onMetadata);
+  probe.addEventListener('error',onError);
+  timer=setTimeout(()=>{
+   const error=new Error('Audio metadata validation timed out');
+   error.code='AUDIO_TIMEOUT';
+   finish(error);
+  },20000);
+  try{probe.src=url;probe.load()}catch(error){
+   const failure=new Error('Audio metadata validation could not start');
+   failure.code='AUDIO_4';failure.mediaCode=4;finish(failure);
+  }
+ });
+}
+
+async function startUrls(){
+ const launch=window.MintScribeLaunch;
+ if(state.loadingUrls)return;
+ const au=(launch.isIntegration?launch.audioUrl:$('#audioUrl')?.value||'').trim();
+ const tu=(launch.isIntegration?launch.transcriptUrl:$('#textUrl')?.value||'').trim();
+ if((launch.isIntegration&&launch.status!=='ready')||!au||!tu){
+  state.error=launch.isIntegration
+   ? launchErrorMessage()
+   : t('selectBoth');
+  console.error('[MintScribe][02/load] 불러오기 차단', {code:'INVALID_LAUNCH',missingRequired:[...launch.missingRequired],invalidParameters:[...(launch.invalidParameters||[])]});
+  renderHome();return;
+ }
+ const scope=$('#scope')?.value||state.scope||'10';
+ state.scope=scope;state.audioUrlInput=au;state.textUrlInput=tu;
+ state.error='';state.loadingUrls=true;
+ console.info('[MintScribe][02/load] 자료 불러오기 시작', {isIntegration:launch.isIntegration,environment:launch.environment,scope});
+ renderHome();
+ let failureCode='NETWORK_ERROR',httpStatus=null;
+ try{
+  failureCode='INVALID_FILE_URL';
+  const audioAddress=new URL(au,location.href),textAddress=new URL(tu,location.href);
+  if(![audioAddress,textAddress].every(url=>['http:','https:'].includes(url.protocol)))throw new Error();
+  failureCode='NETWORK_ERROR';
+  const response=await fetch(textAddress.href);
+  httpStatus=response.status;
+  if(!response.ok){failureCode='TRANSCRIPT_HTTP_ERROR';throw new Error()}
+  const transcript=await response.text();
+  const ext=/\.txt$/i.test(textAddress.pathname)?'txt':'vtt';
+  const cues=parseTranscript(transcript,ext);
+  if(!cues.length){failureCode='NO_TEACHER_CAPTIONS';throw new Error()}
+  console.info('[MintScribe][02/load] 자막 읽기 완료', {format:ext,teacherCaptions:cues.length,httpStatus});
+  failureCode='AUDIO_LOAD_ERROR';
+  const audioInfo=await validateAudioSource(audioAddress.href);
+  console.info('[MintScribe][02/load] 음원 검사 완료', {duration:audioInfo.duration});
+  // Select before resetting so a failed load does not discard the active practice.
+  const previousCues=state.cues;
+  state.cues=cues;
+  const selected=chooseCues(scope);
+  if(!selected.length){state.cues=previousCues;failureCode='NO_MATCHING_CAPTIONS';throw new Error()}
+  if(state.audioUrl?.startsWith('blob:'))URL.revokeObjectURL(state.audioUrl);
+  state.audioFile=null;state.textFile=null;state.audioUrl=audioAddress.href;
+  const fileName=textAddress.pathname.split('/').pop();
+  try{state.textName=decodeURIComponent(fileName)}catch(_){state.textName=fileName}
+  state.sample=false;resetSession();state.selected=selected;
+  failureCode='PRACTICE_RENDER_ERROR';
+  renderPractice();
+  console.info('[MintScribe][02/load] 연습 준비 완료', {selectedCaptions:selected.length,scope,isIntegration:launch.isIntegration});
+ }catch(error){
+  const ko=state.lang==='ko';
+  const detail=failureCode==='TRANSCRIPT_HTTP_ERROR'?`HTTP ${httpStatus}`
+   :failureCode==='AUDIO_LOAD_ERROR'?(error.code==='AUDIO_TIMEOUT'
+    ?(ko?'음원 확인 시간이 초과되었습니다. 연결 상태를 확인하고 다시 시도해 주세요.':'The recording check timed out. Check your connection and try again.')
+    :audioLoadErrorMessage(error.mediaCode))
+   :failureCode==='NO_TEACHER_CAPTIONS'?t('noTeacher')
+   :failureCode==='NO_MATCHING_CAPTIONS'?(ko?'설정한 최소 단어 수에 맞는 선생님 구간이 없습니다.':'No teacher captions meet the minimum word count.')
+   :failureCode==='INVALID_FILE_URL'?(ko?'음원·자막 주소가 올바르지 않습니다.':'The audio or transcript URL is invalid.')
+   :failureCode==='PRACTICE_RENDER_ERROR'?(ko?'연습 화면을 준비하지 못했습니다.':'Could not prepare the practice screen.')
+   :(ko?'네트워크 연결 또는 파일 접근 권한을 확인해 주세요.':'Check your connection and file access permissions.');
+  const displayCode=failureCode==='AUDIO_LOAD_ERROR'?error.code||failureCode:failureCode;
+  state.error=`${t('urlFail')} ${detail} [${displayCode}]`;
+  console.error('[MintScribe][02/load] 자료 불러오기 실패', {code:displayCode,httpStatus:failureCode==='TRANSCRIPT_HTTP_ERROR'?httpStatus:null,errorType:error.name});
+  state.view='home';
+ }finally{
+  state.loadingUrls=false;
+  if(state.view==='home')renderHome();
+ }
+}
+function startSample(){if(window.MintScribeLaunch.isIntegration)return;state.cues=parseTranscript(sampleText,'vtt');state.selected=state.cues;state.audioUrl=null;state.textName='sample.vtt';state.sample=true;resetSession();renderPractice()}
 function current(){return state.selected[state.index]}
 function hintState(c){return state.hints[c.id]||(state.hints[c.id]={uses:0,levels:{}})}
 function avgScore(){const vals=Object.values(state.results);return vals.length?Math.round(vals.reduce((a,r)=>a+r.score,0)/vals.length):0}
@@ -86,4 +210,9 @@ function renderSummary(){stopAudio();state.view='summary';const done=Object.keys
 app.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(!el)return;const a=el.dataset.action;switch(a){case'lang':state.lang=el.dataset.lang;document.documentElement.lang=state.lang;state.view==='home'?renderHome():state.view==='summary'?renderSummary():renderPractice();break;case'audioPick':$('#audioInput').click();break;case'textPick':$('#textInput').click();break;case'sample':startSample();break;case'urlLoad':startUrls();break;case'start':startLocal($('#scope').value);break;case'home':stopAudio();renderHome();break;case'summary':renderSummary();break;case'restart':resetSession();renderPractice();break;case'play':playCue();break;case'loop':state.loop=!state.loop;el.classList.toggle('active',state.loop);el.setAttribute('aria-pressed',state.loop);break;case'timer':state.paused=!state.paused;state.lastActive=Date.now();el.textContent=state.paused?t('timerResume'):t('timerPause');el.classList.toggle('active',!state.paused);break;case'hint':state.hintOpen=!state.hintOpen;renderPractice();break;case'word':{const h=hintState(current()),i=Number(el.dataset.index);if(h.uses<6&&(h.levels[i]||0)<3){h.levels[i]=(h.levels[i]||0)+1;h.uses++;state.lastActive=Date.now();renderPractice()}break}case'check':checkAnswer();break;case'next':nextCue();break;case'jump':stopAudio();state.index=Number(el.dataset.index);state.hintOpen=false;renderPractice();break;case'record':toggleRecord();break;case'demoScore':showDemoScores();break}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){state.paused=true;stopAudio()}else state.lastActive=Date.now()});
 setInterval(()=>{if(state.view!=='practice'||state.paused||document.hidden)return;const audio=$('#sourceAudio'),active=(audio&&!audio.paused)||state.recording||((document.activeElement?.id==='answer'||document.activeElement?.classList.contains('word-input'))&&Date.now()-state.lastActive<8000);if(active){state.seconds++;const c=current();state.cueSeconds[c.id]=(state.cueSeconds[c.id]||0)+1;const v=$('#timeValue');if(v)v.textContent=mmss(state.seconds)}},1000);
-const params=new URLSearchParams(location.search);const paramAudio=params.get('audio')||params.get('audioUrl'),paramText=params.get('transcript')||params.get('transcriptUrl');if(paramAudio||paramText){state.audioUrlInput=paramAudio||'';state.textUrlInput=paramText||''}const segments=params.get('segments');state.urlScope=segments==='full'?'all':['5','10','15'].includes(segments)?segments:null;state.scope=state.urlScope||'10';const minWordsParam=params.get('min_words');const minWordsValue=minWordsParam!==null&&/^\d+$/.test(minWordsParam)?Number(minWordsParam):NaN;state.minWords=Number.isSafeInteger(minWordsValue)?minWordsValue:4;renderHome();
+const launchConfig=window.MintScribeLaunch;
+if(launchConfig.audioUrl||launchConfig.transcriptUrl){state.audioUrlInput=launchConfig.audioUrl;state.textUrlInput=launchConfig.transcriptUrl}
+state.urlScope=launchConfig.urlScope;
+state.scope=launchConfig.scope;
+state.minWords=launchConfig.minWords;
+renderHome();
