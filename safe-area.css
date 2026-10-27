@@ -1,0 +1,46 @@
+/* Keep controls within the display cutout and home-indicator safe areas.
+   Apply once at the shell; preserve existing page gutters and mobile wrapping. */
+:root {
+  --mint-safe-top: env(safe-area-inset-top, 0px);
+  --mint-safe-right: env(safe-area-inset-right, 0px);
+  --mint-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --mint-safe-left: env(safe-area-inset-left, 0px);
+  --mint-topbar-height: 64px;
+}
+html .app-shell {
+  padding-left: var(--mint-safe-left);
+  padding-right: var(--mint-safe-right);
+  padding-bottom: var(--mint-safe-bottom);
+}
+html .topbar {
+  box-sizing: border-box;
+  height: calc(var(--mint-topbar-height) + var(--mint-safe-top));
+  padding-top: var(--mint-safe-top);
+}
+html .home-page {
+  min-height: calc(100dvh - var(--mint-topbar-height) - var(--mint-safe-top) - var(--mint-safe-bottom));
+}
+html .practice-page {
+  height: calc(100dvh - var(--mint-topbar-height) - var(--mint-safe-top) - var(--mint-safe-bottom));
+}
+html .storage-warning {
+  bottom: calc(18px + var(--mint-safe-bottom));
+  max-width: min(620px, calc(100vw - 30px - var(--mint-safe-left) - var(--mint-safe-right)));
+}
+@media (max-height: 700px) and (min-width: 761px) {
+  :root { --mint-topbar-height: 56px; }
+}
+@media (max-width: 760px), (max-height: 700px) {
+  html .home-page, html .practice-page {
+    height: auto;
+    min-height: calc(100svh - var(--mint-topbar-height) - var(--mint-safe-top) - var(--mint-safe-bottom));
+  }
+}
+@media (max-width: 760px) {
+  :root { --mint-topbar-height: 55px; }
+  html .topbar {
+    height: auto;
+    min-height: calc(var(--mint-topbar-height) + var(--mint-safe-top));
+    padding-top: calc(5px + var(--mint-safe-top));
+  }
+}
