@@ -1,5 +1,11 @@
 /* Compact introduction and clear primary action for linked and local practice. */
 html .home-page {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  max-width:820px;
+  width:100%;
+  gap:16px;
+  margin:0 auto;
   height:auto;
   align-items:start;
   align-content:start;
