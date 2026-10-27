@@ -289,8 +289,7 @@ function renderSummary() {
   state.view = 'summary';
   const done = state.selected.filter(cueIsComplete).length;
   const rows = state.selected.map((c, i) => `<div class="summary-row"><span>${String(i + 1).padStart(2, '0')} · ${mmss(c.start)}</span><span>${state.results[c.id] ? state.results[c.id].score + '%' : '—'}</span></div>`).join('');
-  shell(`<main class="page summary summary-v2"><header class="summary-v2-head"><div><div class="eyebrow">MINTSCRIBE 2.0 / REVIEW</div><h1>${('내가 받아쓴 수업')}</h1><p>${('AI 자막의 정답 문장과 나의 학습 결과를 함께 확인하세요.')}</p></div><button class="summary-copy-btn" data-action="copySummary" aria-label="${('받아쓰기 HTML 복사')}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>${('HTML 복사')}</span></button></header>
-    <div id="copyStatus" class="copy-status" role="status" aria-live="polite"></div>
+  shell(`<main class="page summary summary-v2"><header class="summary-v2-head"><div><div class="eyebrow">MINTSCRIBE 2.0 / REVIEW</div><h1>${('내가 받아쓴 수업')}</h1><p>${('AI 자막의 정답 문장과 나의 학습 결과를 함께 확인하세요.')}</p></div></header>
     <div id="exportView" class="summary-export">${summaryExportMarkup()}</div>
     <div class="summary-compact"><div><small>${t('completed')}</small><b>${done} / ${state.selected.length}</b></div><div><small>${t('avg')}</small><b>${done ? avgScore() + '%' : '—'}</b></div></div>
     <details class="summary-details"><summary>${('구간별 점수 보기')}</summary><div class="summary-list">${rows}</div></details>
@@ -299,28 +298,6 @@ function renderSummary() {
     <p class="footnote">${t('reviewCaveat')}</p>
   </main>`);
   window.MintScribeSubmission.syncUI();
-}
-
-async function copySummaryHtml() {
-  const view = $('#exportView');
-  if (!view) return;
-  const html = view.innerHTML;
-  const plain = view.innerText;
-  let copied = false;
-  try {
-    if (navigator.clipboard?.write && window.ClipboardItem) {
-      await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([html], {type:'text/html'}), 'text/plain': new Blob([plain], {type:'text/plain'})})]);
-      copied = true;
-    }
-  } catch (_) { /* Try selection-based rich copy below. */ }
-  if (!copied) {
-    const selection = window.getSelection(), range = document.createRange();
-    range.selectNodeContents(view); selection.removeAllRanges(); selection.addRange(range);
-    copied = document.execCommand('copy');
-    selection.removeAllRanges();
-  }
-  const status = $('#copyStatus');
-  status.textContent = copied ? (('학습 결과가 복사됐어요.')) : (('복사하지 못했어요. 다시 시도해 주세요.'));
 }
 
 function wordInputsMarkup(c) {
@@ -648,7 +625,6 @@ app.addEventListener('click', event => {
   if (!button) return;
   const action = button.dataset.action;
   if (action === 'returnPractice') { renderPractice(); }
-  if (action === 'copySummary') { copySummaryHtml(); }
   if (action === 'restartAudio') { restartCueAudio(); }
   if (action === 'loadTab') { state.loadTab = button.dataset.tab; state.error = ''; renderHome(); }
   if (action === 'panel') { state.panel = button.dataset.panel === 'review' ? 'review' : 'hint'; state.compactToolOpen = true; refreshPracticeTools(); }

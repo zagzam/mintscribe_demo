@@ -53,9 +53,7 @@ html[data-theme="light"] .site-return:hover { background:#eef7ff; border-color:#
 .home-story p, .load-head p, .summary-v2-head p { color: #777777; }
 .story-steps span { background: #f7f7f7; color: #0f91ff; border: 1px solid #e1e1e1; border-radius: 8px; }
 .story-steps b { color: #444444; }
-.load-number, .upload-icon { background: #eef7ff; color: #0f91ff; border-radius: 8px; }
-
-.primary-btn, .play-button, .summary-copy-btn {
+.load-number, .upload-icon { background: #eef7ff; color: #0f91ff; border-radius: 8px; }.primary-btn, .play-button{
   background: #0f91ff;
   border: 1px solid #0f91ff;
   border-radius: 8px;
@@ -63,8 +61,7 @@ html[data-theme="light"] .site-return:hover { background:#eef7ff; border-color:#
   box-shadow: none;
   font-weight: 700;
 }
-.primary-btn { font-size: 16px; line-height: 24px; }
-.primary-btn:hover, .play-button:hover, .summary-copy-btn:hover { background: #0875ce; border-color: #0875ce; }
+.primary-btn { font-size: 16px; line-height: 24px; }.primary-btn:hover, .play-button:hover{ background: #0875ce; border-color: #0875ce; }
 .secondary-btn, .ghost-btn, .pill-btn, .speed-select, .restart-button,
 .cue-navigation, .cue-navigation button, .cue-navigation select {
   background: #ffffff;
@@ -123,10 +120,7 @@ html[data-theme="light"] .resume-clear { border-color:#e1e1e1; color:#444444; }
   font-weight: 700;
 }
 .tool-tabs i { background: #0f91ff; }
-.notice.error { background: #fff3f3; color: #a22626; border: 1px solid #e5a1a1; }
-
-.session-progress b, .summary-details summary, .summary-details .summary-row span:last-child,
-.copy-status { color: #0f91ff; }
+.notice.error { background: #fff3f3; color: #a22626; border: 1px solid #e5a1a1; }.session-progress b, .summary-details summary, .summary-details .summary-row span:last-child{ color: #0f91ff; }
 .session-progress .progress-track { background: #e1e1e1; }
 .session-progress .progress-fill { background: #0f91ff; }
 .strip-stat, .summary-details .summary-row { border-color: #e1e1e1; }
