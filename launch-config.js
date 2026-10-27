@@ -16,7 +16,7 @@
   const requestedMode = params.get('mode') || '';
   const validMode = ['dev', 'real'].includes(requestedMode);
   const missingRequired = isIntegration
-    ? [['audio', audioUrl], ['transcript', transcriptUrl], ['token', token], ['mode', requestedMode], ['tu_name', teacherName]]
+    ? [['audio', audioUrl], ['transcript', transcriptUrl], ['token', token], ['mode', requestedMode]]
       .filter(([, value]) => !value.trim()).map(([name]) => name)
     : [];
   const invalidParameters = isIntegration && requestedMode.trim() && !validMode ? ['mode'] : [];
