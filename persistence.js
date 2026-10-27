@@ -169,9 +169,9 @@
       version: 2, sourceId, savedAt: Date.now(), view: view === 'summary' && complete ? 'summary' : 'practice',
       selectedIds: state.selected.map(cue => cue.id), index: state.index,
       answers: state.answers, wordAnswers: state.wordAnswers, results: state.results,
-      hints: state.hints, hintUsed: state.hintUsed, seconds: state.seconds,
-      cueSeconds: state.cueSeconds, scope: state.practiceScope || state.scope,
-      panel: state.panel, hintIndex: state.hintIndex, paused: state.paused,
+      hints: state.hints, hintUsed: state.hintUsed,
+      scope: state.practiceScope || state.scope,
+      panel: state.panel, hintIndex: state.hintIndex,
       loop: state.loop, playbackRate: state.playbackRate || 1,
       nameHide: state.nameHide === 'Y' ? 'Y' : 'N',
       registration: state.registration || null
@@ -209,7 +209,7 @@
     const total = progress.selectedIds?.length || 0;
     const name = esc(source.textName || (('이전 수업')));
     return `<section class="resume-card" aria-label="${('저장된 연습')}">
-      <div class="resume-copy"><small>${('자동 저장된 최근 연습')}</small><strong>${name}</strong><span>${(`확인한 구간 ${finished}/${total} · 집중 시간 ${mmss(progress.seconds || 0)}`)}</span></div>
+      <div class="resume-copy"><small>${('자동 저장된 최근 연습')}</small><strong>${name}</strong><span>${(`확인한 구간 ${finished}/${total}`)}</span></div>
       <div class="resume-actions"><button type="button" class="resume-button" data-action="resumePractice">${('이어서 하기')} →</button><button type="button" class="resume-clear" data-action="clearPractice">${('기록 삭제')}</button></div>
     </section>`;
   }
@@ -340,13 +340,13 @@
     state.results = progress.results || {};
     state.hints = progress.hints || {};
     state.hintUsed = progress.hintUsed || 0;
-    state.seconds = progress.seconds || 0;
-    state.cueSeconds = progress.cueSeconds || {};
+
+
     state.scope = progress.scope || '10';
     state.practiceScope = state.scope;
-    state.panel = progress.panel || 'hint';
+    state.panel = progress.panel === 'review' ? 'review' : 'hint';
     state.hintIndex = progress.hintIndex || 0;
-    state.paused = Boolean(progress.paused);
+
     state.loop = Boolean(progress.loop);
     state.playbackRate = progress.playbackRate || 1;
     state.nameHide = progress.nameHide === 'Y' ? 'Y' : 'N';

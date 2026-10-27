@@ -150,20 +150,13 @@ html[data-theme="light"] .resume-clear { border-color:#e1e1e1; color:#444444; }
 .word-slot.revealed .slot-number { color: #333333; -webkit-text-fill-color: #333333; }
 
 .tool-kicker, .hint-focus-word, .empty-panel b, .review-reference p,
-.summary-compact b { color: #242424; }
-.tool-intro strong, .tool-note, .shadow-intro p, .empty-panel p,
-.hint-focus small, .summary-compact small { color: #777777; }
-.tool-intro em, .empty-panel > span, .review-reference span,
-.score-heading strong { color: #0f91ff; }
-.hint-word, .hint-focus, .review-reference, .shadow-placeholder,
-.summary-export { background: #ffffff; border-color: #e1e1e1; border-radius: 8px; color: #444444; box-shadow: none; }
+.summary-compact b { color: #242424; }.tool-intro strong, .tool-note, .empty-panel p, .hint-focus small, .summary-compact small{ color: #777777; }.tool-intro em, .empty-panel > span, .review-reference span{ color: #0f91ff; }.hint-word, .hint-focus, .review-reference, .summary-export{ background: #ffffff; border-color: #e1e1e1; border-radius: 8px; color: #444444; box-shadow: none; }
 .hint-word.current { border-color: #0f91ff; box-shadow: 0 0 0 1px #0f91ff; }
 .hint-word.correct { background: #eef7ff; border-color: #0f91ff; color: #0869bb; }
 .hint-word.system-shown { background: #f3f3f3; border-color: #b7b7b7; color: #333333; }
 .hint-focus { background: #fbfbfb; }
 .hint-focus-word.correct { color:#0869bb; }
-.system-letter { color: #777777; text-shadow: none; }
-.reveal-btn, .hint-focus .reveal-btn, .score-trigger {
+.system-letter { color: #777777; text-shadow: none; }.reveal-btn, .hint-focus .reveal-btn{
   background: #eef7ff; border: 1px solid #0f91ff; border-radius: 8px;
   color: #0869bb; box-shadow: none;
 }
@@ -171,19 +164,6 @@ html[data-theme="light"] .resume-clear { border-color:#e1e1e1; color:#444444; }
 .review-ring, .review-ring.passed { background: conic-gradient(#0f91ff var(--score),#e1e1e1 0); }
 .review-ring strong { background: #ffffff; color: #242424; }
 .review-head span, .review-head small { color: #777777; }
-/* NEEDS_DESIGN_REVIEW: the red and violet score stops are inferred; blue is verified. */
-.demo-badge { background:#f3f3f3; color:#555555; }
-.record-btn { background:#eef7ff; border-color:#0f91ff; color:#0869bb; }
-.record-btn i { background:#c24545; box-shadow:none; }
-.record-btn.recording { background:#fff2f2; border-color:#c24545; color:#9e3030; }
-.download-btn { border-color:#0f91ff; color:#0869bb; }
-.shadow-placeholder:first-letter { color:#0f91ff; }
-.score-flow { gap: 5px 12px; padding: 5px 0; }
-.score-word { display:inline-flex; flex-direction:column; gap:2px; padding:3px 0; border:0; border-radius:0; background:transparent; box-shadow:none; }
-.score-word b { color:var(--tone); font-size:13px; line-height:1.25; }
-.score-word small { color:#777777; font-size:9px; font-weight:600; }
-.legend-gradient { background:linear-gradient(90deg,#999999 0%,#0f91ff 100%); }
-.legend-labels .pass-label, .legend-labels span:nth-child(2) { color:#0869bb; }
 .summary-v2-head h1, .summary-compact b { color: #242424; }
 .summary-v2 .footnote { color: #777777; }
 
@@ -206,7 +186,7 @@ html[data-theme="dark"] .home-story p, html[data-theme="dark"] .load-head p,
 html[data-theme="dark"] .summary-v2-head p, html[data-theme="dark"] .helper,
 html[data-theme="dark"] .footnote, html[data-theme="dark"] .tool-note,
 html[data-theme="dark"] .cue-time, html[data-theme="dark"] .session-progress > span,
-html[data-theme="dark"] .strip-stat small { color:#c0c0c0; }html[data-theme="dark"] .theme-toggle, html[data-theme="dark"] .site-return, html[data-theme="dark"] .secondary-btn, html[data-theme="dark"] .ghost-btn, html[data-theme="dark"] .pill-btn, html[data-theme="dark"] .speed-select, html[data-theme="dark"] .restart-button, html[data-theme="dark"] .cue-navigation, html[data-theme="dark"] .cue-navigation button, html[data-theme="dark"] .cue-navigation select, html[data-theme="dark"] .text-input, html[data-theme="dark"] .word-slot, html[data-theme="dark"] .word-entry, html[data-theme="dark"] .listen-surface textarea, html[data-theme="dark"] .hint-word, html[data-theme="dark"] .hint-focus, html[data-theme="dark"] .review-reference, html[data-theme="dark"] .shadow-placeholder{ background:#303030; border-color:#555555; color:#f4f4f4; box-shadow:none; }
+html[data-theme="dark"] .strip-stat small { color:#c0c0c0; }html[data-theme="dark"] .theme-toggle, html[data-theme="dark"] .site-return, html[data-theme="dark"] .secondary-btn, html[data-theme="dark"] .ghost-btn, html[data-theme="dark"] .pill-btn, html[data-theme="dark"] .speed-select, html[data-theme="dark"] .restart-button, html[data-theme="dark"] .cue-navigation, html[data-theme="dark"] .cue-navigation button, html[data-theme="dark"] .cue-navigation select, html[data-theme="dark"] .text-input, html[data-theme="dark"] .word-slot, html[data-theme="dark"] .word-entry, html[data-theme="dark"] .listen-surface textarea, html[data-theme="dark"] .hint-word, html[data-theme="dark"] .hint-focus, html[data-theme="dark"] .review-reference{ background:#303030; border-color:#555555; color:#f4f4f4; box-shadow:none; }
 html[data-theme="dark"] .theme-toggle:hover, html[data-theme="dark"] .site-return:hover,
 html[data-theme="dark"] .secondary-btn:hover, html[data-theme="dark"] .ghost-btn:hover,
 html[data-theme="dark"] .pill-btn:hover { background:#363d43; border-color:#0f91ff; }html[data-theme="dark"] .load-switch button, html[data-theme="dark"] .tool-tabs button{ color:#c0c0c0; }html[data-theme="dark"] .load-switch button.active, html[data-theme="dark"] .tool-tabs button.active, html[data-theme="dark"] .pill-btn.active{
@@ -228,12 +208,6 @@ html[data-theme="dark"] .word-slot.revealed .word-input,
 html[data-theme="dark"] .word-slot.revealed .slot-length,
 html[data-theme="dark"] .word-slot.revealed .slot-number { color:#f4f4f4; -webkit-text-fill-color:#f4f4f4; }
 html[data-theme="dark"] .system-letter { color:#c0c0c0; }
-html[data-theme="dark"] .demo-badge { background:#363636; color:#c0c0c0; }
-html[data-theme="dark"] .record-btn { background:#253c50; border-color:#0f91ff; color:#7dc5ff; }
-html[data-theme="dark"] .record-btn.recording { background:#432b2b; border-color:#c24545; color:#ffc2c2; }
-html[data-theme="dark"] .download-btn { border-color:#0f91ff; color:#7dc5ff; }
-html[data-theme="dark"] .score-word { background:transparent; border:0; }
-html[data-theme="dark"] .score-word small { color:#c0c0c0; }
 html[data-theme="dark"] .review-ring strong { background:#292929; color:#f4f4f4; }
 html[data-theme="dark"] .summary-details .summary-list { background:transparent; color:#f4f4f4; }
 html[data-theme="dark"] .resume-card { background:#303030; border-color:#555555; color:#f4f4f4; }

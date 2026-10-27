@@ -40,7 +40,7 @@ html.keyboard-open .practice-page{padding-bottom:calc(110px + var(--keyboard-ins
  .listen-surface,.insight-surface{position:static;height:auto;min-height:0;overflow:visible}
  .listen-surface{display:flex!important}
  .insight-surface{display:flex!important}
- .insight-surface .tool-tabs{height:auto;grid-template-columns:repeat(3,minmax(0,1fr));padding:6px}
+ .insight-surface .tool-tabs{height:auto;grid-template-columns:repeat(2,minmax(0,1fr));padding:6px}
  .insight-surface .tool-tabs button{font-size:12px;padding:9px 4px}
  .insight-surface .tool-tabs .compact-write-tab{display:none!important}
  .insight-surface .tool-content,.workbench.compact-tool-open .tool-content{display:block;overflow:visible}
@@ -49,7 +49,6 @@ html.keyboard-open .practice-page{padding-bottom:calc(110px + var(--keyboard-ins
  .hint-word-list{max-height:none;overflow:visible}
  .listen-surface textarea{flex:none;min-height:130px}
  .word-slot .word-input,.text-input,.listen-surface textarea,.cue-navigation select,.speed-select{font-size:16px}
- .score-flow{max-height:none;overflow:visible}
  .tool-content{flex:none}
 }
 @media(max-width:760px){
@@ -122,3 +121,14 @@ html .practice-head .lesson-teacher {
 html .practice-page .session-strip {
   grid-template-columns:minmax(0,1fr) repeat(2,auto);
 }
+
+/* Beta: two practice tools, section numbering, and no learning-time metrics. */
+html .cue-bar .section-title {
+  max-width:none;
+  margin:0;
+  font-size:clamp(17px,1.6vw,22px);
+  font-weight:700;
+  color:var(--ink);
+}
+html .cue-bar .section-title span { font-weight:400; color:var(--muted); }
+html .summary-compact { grid-template-columns:repeat(2,minmax(0,1fr)); }

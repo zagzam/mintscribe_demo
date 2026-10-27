@@ -1,4 +1,4 @@
-/* The compact visual layer reuses the parser, playback, scoring and recording logic in app.js. */
+/* The compact visual layer reuses the parser, playback and scoring logic in app.js. */
 state.loadTab = state.audioUrlInput || state.textUrlInput ? 'url' : 'files';
 state.scope = state.scope || '10';
 state.panel = 'hint';
@@ -190,20 +190,9 @@ function reviewMarkup(c, result) {
   return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${esc(c.text)}</p></div><p class="tool-note">✧ ${revealed ? ((`AI가 공개한 단어 ${revealed}개는 정답으로 인정하지 않았어요. `)) : ''}${t('reviewCaveat')}</p>`;
 }
 
-function scoreColor(score) {
-  const gray = [153, 153, 153], blue = [15, 145, 255];
-  const value = Math.max(0, Math.min(100, score));
-  return `rgb(${gray.map((channel, i) => Math.round(channel + (blue[i] - channel) * value / 100)).join(' ')})`;
-}
 
-function shadowMarkup(c) {
-  const scores = state.demoScores;
-  const average = scores ? (scores.reduce((n, item) => n + item.score, 0) / scores.length).toFixed(1) : null;
-  return `<div class="shadow-intro"><div><span class="tool-kicker">${t('shadow')}</span><p>${t('shadowBody')}</p></div><span class="demo-badge">${t('demoLabel')}</span></div>
-    <div class="shadow-controls"><button class="record-btn ${state.recording ? 'recording' : ''}" data-action="record"><i></i>${state.recording ? t('stop') : t('record')}</button>${state.recordUrl ? `<audio id="selfAudio" controls src="${state.recordUrl}"></audio><a class="download-btn" download="mintscribe-shadowing.webm" href="${state.recordUrl}" title="${t('download')}">↓</a>` : ''}</div>
-    <button class="score-trigger" data-action="demoScore">✦ ${state.recordUrl ? t('demoScore') : (('시연 점수 미리보기'))} →</button>
-    ${scores ? `<div class="score-heading"><span>${('문장 평균 · 시연 점수')}</span><strong>${average}<small> / 100</small></strong></div><div class="score-flow">${scores.map(x => `<span class="score-word" style="--tone:${scoreColor(x.score)}" title="${x.word}: ${x.score.toFixed(1)}"><b>${esc(x.word)}</b><small>${x.score.toFixed(0)}</small></span>`).join('')}</div><div class="score-legend"><div class="legend-gradient"><span class="pass-marker" title="80 ${('통과')}"></span></div><div class="legend-labels"><span>0 · ${('다시 연습')}</span><span class="pass-label">80+ ${('통과')}</span><span>100 · ${('매우 좋음')}</span></div></div>` : `<div class="shadow-placeholder">♬ <span>${('녹음 후 내 발음을 듣고, 시연 점수를 확인할 수 있어요.')}</span></div>`}`;
-}
+
+
 
 function punctuatedStudentLine(c) {
   const source = String(c.text || '');
@@ -278,7 +267,7 @@ function renderSummary() {
   shell(`<main class="page summary summary-v2"><header class="summary-v2-head"><div><div class="eyebrow">MINTSCRIBE 2.0 / REVIEW</div><h1>${('내가 받아쓴 수업')}</h1><p>${('선생님의 말에서 직접 받아쓴 내용을 한눈에 확인하세요.')}</p></div><button class="summary-copy-btn" data-action="copySummary" aria-label="${('받아쓰기 HTML 복사')}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>${('HTML 복사')}</span></button></header>
     <div id="copyStatus" class="copy-status" role="status" aria-live="polite"></div>
     <div id="exportView" class="summary-export">${summaryExportMarkup()}</div>
-    <div class="summary-compact"><div><small>${t('totalTime')}</small><b>${mmss(state.seconds)}</b></div><div><small>${t('completed')}</small><b>${done} / ${state.selected.length}</b></div><div><small>${t('avg')}</small><b>${done ? avgScore() + '%' : '—'}</b></div></div>
+    <div class="summary-compact"><div><small>${t('completed')}</small><b>${done} / ${state.selected.length}</b></div><div><small>${t('avg')}</small><b>${done ? avgScore() + '%' : '—'}</b></div></div>
     <details class="summary-details"><summary>${('문장별 점수 보기')}</summary><div class="summary-list">${rows}</div></details>
     ${window.MintScribeSubmission.markup()}
     <div class="summary-v2-actions"><button class="secondary-btn" data-action="returnPractice">← ${('연습으로 돌아가기')}</button>${window.MintScribeLaunch.isIntegration ? '' : `<button class="secondary-btn" data-action="home">${t('newFiles')}</button>`}<button class="primary-btn" data-action="restart">${t('restart')} →</button></div>
@@ -329,19 +318,19 @@ function renderPractice() {
   const result = state.results[c.id];
   const key = result ? `${c.id}:${result.score}` : null;
   if (key && state.lastResultKey !== key) { state.panel = 'review'; state.compactToolOpen = true; state.lastResultKey = key; }
-  const pct = progressPercent(), panel = state.panel || 'hint';
+  const pct = progressPercent(), panel = state.panel === 'review' ? 'review' : 'hint';
   shell(`<main class="page practice-page">
     <div class="practice-head"><h1 class="lesson-teacher">${esc((window.MintScribeLaunch.teacherName || '').trim() || '무명')} 강사님 수업</h1>${window.MintScribeLaunch.isIntegration ? '' : `<div class="head-buttons"><button class="ghost-btn" data-action="home">← <span>${t('back')}</span></button></div>`}</div>
     <div class="session-strip"><div class="session-progress"><span>전체 진행도 <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.results).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>통과구간</small><b>${Object.values(state.results).filter(x => x.score >= 80).length}/${state.selected.length}</b></div></div>
     ${practiceNoticeMarkup()}
-    <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><span class="cue-label">CAPTION ${String(state.index + 1).padStart(2, '0')} / ${String(state.selected.length).padStart(2, '0')}</span><h2>${esc(c.speaker)}</h2></div><div class="cue-navigation"><select id="cueJump" aria-label="${t('items')}">${state.selected.map((x, i) => `<option value="${i}" ${i === state.index ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${mmss(x.start)}</option>`).join('')}</select></div></div>
+    <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><h2 class="section-title">구간 <b>${String(state.index + 1).padStart(2, '0')}</b><span>/${String(state.selected.length).padStart(2, '0')}</span></h2></div><div class="cue-navigation"><select id="cueJump" aria-label="${t('items')}">${state.selected.map((x, i) => `<option value="${i}" ${i === state.index ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${mmss(x.start)}</option>`).join('')}</select></div></div>
       <div class="cue-time">${mmss(c.start)} — ${mmss(c.end)} <span>·</span> ${duration(c)} <span>·</span> ${wordTokens(c.text).length} ${t('words')}</div>
       <div class="player-anchor"><div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><button class="restart-button" data-action="restartAudio" ${state.sample ? 'disabled' : ''} aria-label="${('처음부터 재생')}" title="${('처음부터 재생')}">⏮</button><input class="seek-bar" id="seekBar" type="range" min="${c.start}" max="${c.end}" step="0.01" value="${c.start}" style="--seek-pct:0%" aria-label="${('재생 위치')}" aria-valuetext="${mmss(c.start)}" ${state.sample ? 'disabled' : ''}><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div></div>
       <div class="play-options"><button class="pill-btn ${state.loop ? 'active' : ''}" data-action="loop" aria-pressed="${state.loop}">↺ ${t('loop')}</button><select id="speed" class="speed-select" aria-label="${t('slow')}"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option></select></div>
       ${state.sample ? `<div class="sample-note">${t('sampleNoAudio')}</div>` : ''}
       <div class="write-label"><span>${t('write')}</span><small>${('단어 아래 글자 수를 보고 입력하세요')}</small></div>${wordInputsMarkup(c)}<textarea id="answer" class="hidden" tabindex="-1" aria-hidden="true">${esc(state.answers[c.id] || '')}</textarea>
       <div class="write-actions"><div class="caption-actions"><button class="secondary-btn" data-action="prev" ${state.index === 0 ? 'disabled' : ''}>← ${('이전 자막')}</button><button class="secondary-btn" data-action="check">${t('check')}</button><button class="primary-btn" data-action="next">${state.index === state.selected.length - 1 ? t('finish') : t('next')} →</button></div><span class="ai-caution">✦ AI STT ${('기준')}</span></div>
-    </section><section class="insight-surface"><div class="tool-tabs" role="tablist" aria-label="연습 도구"><button class="compact-write-tab" role="tab" data-action="toolClose">✎ ${('받아쓰기')}</button><button role="tab" data-action="panel" data-panel="hint" aria-selected="${panel === 'hint'}" class="${panel === 'hint' ? 'active' : ''}">✧ ${('힌트')}</button><button role="tab" data-action="panel" data-panel="review" aria-selected="${panel === 'review'}" class="${panel === 'review' ? 'active' : ''}">◎ ${('확인')}${result ? '<i></i>' : ''}</button><button role="tab" data-action="panel" data-panel="shadow" aria-selected="${panel === 'shadow'}" class="${panel === 'shadow' ? 'active' : ''}">◉ ${('따라 말하기')}</button></div><div class="tool-content">${panel === 'hint' ? hintMarkup(c) : panel === 'review' ? reviewMarkup(c, result) : shadowMarkup(c)}</div></section></div>
+    </section><section class="insight-surface"><div class="tool-tabs" role="tablist" aria-label="연습 도구"><button class="compact-write-tab" role="tab" data-action="toolClose">✎ ${('받아쓰기')}</button><button role="tab" data-action="panel" data-panel="hint" aria-selected="${panel === 'hint'}" class="${panel === 'hint' ? 'active' : ''}">✧ ${('힌트')}</button><button role="tab" data-action="panel" data-panel="review" aria-selected="${panel === 'review'}" class="${panel === 'review' ? 'active' : ''}">◎ ${('확인')}${result ? '<i></i>' : ''}</button></div><div class="tool-content">${panel === 'review' ? reviewMarkup(c, result) : hintMarkup(c)}</div></section></div>
     <audio id="sourceAudio" src="${esc(state.audioUrl || '')}" preload="metadata"></audio>
   </main>`);
   bindPractice();
@@ -451,7 +440,7 @@ async function restartCueAudio() {
   try {
     await audio.play();
     state.playing = true;
-    state.lastActive = Date.now();
+
     syncPlayButton();
   } catch (error) { alert(error.message); }
 }
@@ -547,7 +536,7 @@ function bindWordInputs(c) {
     const stats = document.querySelectorAll('.session-strip .strip-stat b');
     if (stats[0]) stats[0].textContent = Object.keys(state.results).length ? `${avgScore()}%` : '—';
     if (stats[1]) stats[1].textContent = `${Object.values(state.results).filter(result => result.score >= 80).length}/${state.selected.length}`;
-    state.lastActive = Date.now();
+
   };
   inputs.forEach((input, i) => {
     const handleInput = event => {
@@ -606,7 +595,7 @@ app.addEventListener('click', event => {
   if (action === 'copySummary') { copySummaryHtml(); }
   if (action === 'restartAudio') { restartCueAudio(); }
   if (action === 'loadTab') { state.loadTab = button.dataset.tab; state.error = ''; renderHome(); }
-  if (action === 'panel') { state.panel = button.dataset.panel; state.compactToolOpen = true; renderPractice(); }
+  if (action === 'panel') { state.panel = button.dataset.panel === 'review' ? 'review' : 'hint'; state.compactToolOpen = true; renderPractice(); }
   if (action === 'toolClose') { state.compactToolOpen = false; renderPractice(); }
   if (action === 'prev' && state.index > 0) { stopAudio(); state.index--; renderPractice(); }
   if (action === 'hintPrev' && state.hintIndex > 0) { state.hintIndex--; renderPractice(); }
@@ -633,11 +622,6 @@ app.addEventListener('change', event => {
   if (event.target.id === 'scope') state.scope = event.target.value;
 });
 
-showDemoScores = function () {
-  const words = wordTokens(current().text).slice(0, 30);
-  const sampleRange = [24, 91, 58, 80, 43, 96, 67, 34, 86, 73, 51, 99];
-  state.demoScores = words.map((word, i) => ({word, score: sampleRange[i % sampleRange.length] + ((i * 7) % 9) / 10}));
-  renderPractice();
-};
+
 
 renderHome();
