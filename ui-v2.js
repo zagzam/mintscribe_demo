@@ -183,9 +183,9 @@ function openCueReview(c, result) {
   dialog.id = 'cueReviewDialog';
   dialog.className = 'cue-review-dialog';
   dialog.setAttribute('aria-labelledby','cueReviewTitle');
-  const title = result.missing ? `미입력 단어가 ${result.missing}개 있어요` : 'AI 자막과 비교해 보세요';
-  const help = result.missing ? '다시 풀거나, 미입력 단어의 정답을 확인하고 계속 진행할 수 있어요.' : '오답과 AI 힌트로 공개한 단어를 확인한 뒤 계속 진행해 주세요.';
-  dialog.innerHTML = `<div class="cue-review-scroll"><div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><h2 id="cueReviewTitle">${title}</h2><p>${help}</p></div></div>${resultLegendMarkup()}<div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p></div>${answerComparisonMarkup(c)}<p class="tool-note">${t('reviewCaveat')}</p></div><div class="cue-review-actions"><button type="button" class="secondary-btn" data-action="retryCue">다시 풀기</button><button type="button" class="primary-btn" data-action="continueCue">${state.index === state.selected.length - 1 ? '결과 요약 보기' : '계속'}</button></div>`;
+  const title = result.missing ? `미입력 단어가 ${result.missing}개 있어요` : '결과를 확인해 주세요';
+  const help = result.missing ? '다시 풀거나, 미입력 단어의 정답을 확인하고 계속 진행할 수 있어요.' : '붉은 단어를 확인한 뒤 계속 진행해 주세요.';
+  dialog.innerHTML = `<div class="cue-review-scroll"><div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><h2 id="cueReviewTitle">${title}</h2><p>${help}</p></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p></div><p class="tool-note">${t('reviewCaveat')}</p></div><div class="cue-review-actions"><button type="button" class="secondary-btn" data-action="retryCue">다시 풀기</button><button type="button" class="primary-btn" data-action="continueCue">${state.index === state.selected.length - 1 ? '결과 요약 보기' : '계속'}</button></div>`;
   state.reviewPending = {cueId:c.id,result};
   dialog.addEventListener('cancel', event => { event.preventDefault(); closeCueReview(false); });
   document.body.appendChild(dialog);
@@ -243,45 +243,33 @@ function hintMarkup(c) {
 }
 
 function resultWordKind(c, i) {
-  if (wordIsRevealed(c, i)) return 'hint';
-  return wordIsCorrect(c, i) ? 'correct' : 'error';
+  // Any hint use, including the first letter, marks this word for review.
+  const usedHint = (state.hints[c.id]?.levels?.[i] || 0) > 0;
+  return !usedHint && wordIsCorrect(c, i) ? 'correct' : 'error';
 }
 
 function referenceResultMarkup(c, exported = false) {
   const source = String(c.text || '');
   const matches = [...source.matchAll(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu)];
-  const colors = {correct:'#0F75D5',hint:'#242424',error:'#BA3434'};
+  const colors = {correct:'#242424',error:'#BA3434'};
   let cursor = 0;
   return matches.map((match, i) => {
     const before = source.slice(cursor, match.index);
     cursor = match.index + match[0].length;
     const kind = resultWordKind(c, i);
-    const label = kind === 'correct' ? '직접 정답' : kind === 'hint' ? 'AI 힌트' : '오답 또는 미입력';
+    const label = kind === 'correct' ? '직접 정답' : '복습할 단어';
     return `${esc(before)}<span class="result-word result-${kind}" data-result="${kind}" title="${label}"${exported ? ` style="color:${colors[kind]};"` : ''}>${esc(match[0])}</span>`;
   }).join('') + esc(source.slice(cursor));
 }
 
-function resultLegendMarkup(exported = false) {
-  return `<div class="result-legend"${exported ? ' style="font:400 12px/1.7 Pretendard,Arial,sans-serif;margin:10px 0;color:#777777;"' : ''}><span class="result-correct"${exported ? ' style="color:#0F75D5;"' : ''}>파란색 · 직접 정답</span> / <span class="result-hint"${exported ? ' style="color:#242424;"' : ''}>기본색 · AI 힌트</span> / <span class="result-error"${exported ? ' style="color:#BA3434;"' : ''}>붉은색 · 오답·미입력</span></div>`;
-}
-
-function answerComparisonMarkup(c, exported = false) {
-  const typed = state.wordAnswers[c.id] || [];
-  const differences = wordTokens(c.text).flatMap((word, i) => resultWordKind(c, i) === 'error'
-    ? [`<li>${i + 1}번 · ${esc(String(typed[i] || '').trim() || '(미입력)')} → <span${exported ? ' style="color:#BA3434;"' : ' class="result-error"'}>${esc(word)}</span></li>`] : []);
-  if (!differences.length) return '';
-  return `<details class="answer-comparison"${exported ? ' style="color:#555555;font:400 13px/1.7 Pretendard,Arial,sans-serif;margin-top:8px;"' : ''}><summary>내 입력과 AI 원문 비교 (${differences.length})</summary><ul>${differences.join('')}</ul></details>`;
-}
-
 function reviewMarkup(c, result) {
   if (!result) return `<div class="empty-panel"><span>◎</span><b>다음 자막을 누르면 결과가 여기에 표시돼요.</b><p>${t('reviewCaveat')}</p></div>`;
-  const hinted = wordTokens(c.text).filter((_, i) => wordIsRevealed(c, i)).length;
-  return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div>${resultLegendMarkup()}<div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p></div>${answerComparisonMarkup(c)}<p class="tool-note">${hinted ? `AI가 공개한 단어 ${hinted}개는 정답으로 인정하지 않았어요. ` : ''}${t('reviewCaveat')}</p>`;
+  return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p></div><p class="tool-note">${t('reviewCaveat')}</p>`;
 }
 
 function summaryExportMarkup() {
-  const lines = state.selected.map((c, i) => `<div style="margin:0;padding:13px 0;border-bottom:1px solid #E1E1E1;"><div style="display:flex;gap:14px;align-items:baseline;color:#242424;font:500 16px/1.7 Pretendard,Arial,sans-serif;"><span style="flex:none;color:#777777;font:700 11px/1.7 Pretendard,Arial,sans-serif;">${String(i + 1).padStart(2, '0')}</span><span>${referenceResultMarkup(c, true)}</span></div>${answerComparisonMarkup(c, true)}</div>`).join('');
-  return `<section style="background:#ffffff;border:1px solid #E1E1E1;border-radius:8px;padding:clamp(20px,3vw,34px);"><div style="color:#0F91FF;font:700 11px/1.4 Pretendard,Arial,sans-serif;letter-spacing:1.5px;">MINTSCRIBE 2.0 · TRANSCRIPT</div><h2 style="color:#242424;font:700 26px/1.35 Pretendard,Arial,sans-serif;margin:7px 0 4px;">나의 수업 받아쓰기</h2><p style="color:#777777;font:400 12px/1.6 Pretendard,Arial,sans-serif;margin:0 0 10px;">AI 자막 전체 문장에 학습 결과를 표시했어요. 붉은 단어는 다시 확인해 보세요.</p>${resultLegendMarkup(true)}<div>${lines}</div></section>`;
+  const lines = state.selected.map((c, i) => `<div style="margin:0;padding:13px 0;border-bottom:1px solid #E1E1E1;"><div style="display:flex;gap:14px;align-items:baseline;color:#242424;font:500 16px/1.7 Pretendard,Arial,sans-serif;"><span style="flex:none;color:#777777;font:700 11px/1.7 Pretendard,Arial,sans-serif;">${String(i + 1).padStart(2, '0')}</span><span>${referenceResultMarkup(c, true)}</span></div></div>`).join('');
+  return `<section style="background:#ffffff;border:1px solid #E1E1E1;border-radius:8px;padding:clamp(20px,3vw,34px);"><div style="color:#0F91FF;font:700 11px/1.4 Pretendard,Arial,sans-serif;letter-spacing:1.5px;">MINTSCRIBE 2.0 · TRANSCRIPT</div><h2 style="color:#242424;font:700 26px/1.35 Pretendard,Arial,sans-serif;margin:7px 0 4px;">나의 수업 받아쓰기</h2><p style="color:#777777;font:400 12px/1.6 Pretendard,Arial,sans-serif;margin:0 0 10px;">AI 자막을 기준으로 정리한 학습 결과입니다.</p><div>${lines}</div></section>`;
 }
 
 function renderSummary() {
