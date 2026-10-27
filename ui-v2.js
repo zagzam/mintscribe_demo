@@ -205,7 +205,8 @@ nextCue = function () {
   console.info('[MintScribe][04/completion] 다음 구간 이동 전 자동 확인', {
     section:state.index + 1,score:result.score,missing:result.missing,hinted:result.hinted,total:result.total
   });
-  if (result.correct === result.total && result.total > 0) {
+  // Correct and fully revealed words are locked: there is nothing left to retry.
+  if (result.correct + result.hinted === result.total && result.total > 0) {
     result.continued = true;
     advanceReviewedCue();
     saveReviewProgress();
