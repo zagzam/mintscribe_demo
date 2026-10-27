@@ -183,9 +183,10 @@ function openCueReview(c, result) {
   dialog.id = 'cueReviewDialog';
   dialog.className = 'cue-review-dialog';
   dialog.setAttribute('aria-labelledby','cueReviewTitle');
+  const canRetry = result.correct + result.hinted < result.total;
   const title = result.missing ? `미입력 단어가 ${result.missing}개 있어요` : '결과를 확인해 주세요';
   const help = result.missing ? '다시 풀거나, 미입력 단어의 정답을 확인하고 계속 진행할 수 있어요.' : '붉은 단어를 확인한 뒤 계속 진행해 주세요.';
-  dialog.innerHTML = `<div class="cue-review-scroll"><div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><h2 id="cueReviewTitle">${title}</h2><p>${help}</p></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p></div><p class="tool-note">${t('reviewCaveat')}</p></div><div class="cue-review-actions"><button type="button" class="secondary-btn" data-action="retryCue">다시 풀기</button><button type="button" class="primary-btn" data-action="continueCue">${state.index === state.selected.length - 1 ? '결과 요약 보기' : '계속'}</button></div>`;
+  dialog.innerHTML = `<div class="cue-review-scroll"><div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><h2 id="cueReviewTitle">${title}</h2><p>${help}</p></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p></div><p class="tool-note">${t('reviewCaveat')}</p></div><div class="cue-review-actions ${canRetry ? '' : 'single-action'}">${canRetry ? '<button type="button" class="secondary-btn" data-action="retryCue">다시 풀기</button>' : ''}<button type="button" class="primary-btn" data-action="continueCue">${state.index === state.selected.length - 1 ? '결과 요약 보기' : '계속'}</button></div>`;
   state.reviewPending = {cueId:c.id,result};
   dialog.addEventListener('cancel', event => { event.preventDefault(); closeCueReview(false); });
   document.body.appendChild(dialog);
@@ -205,8 +206,8 @@ nextCue = function () {
   console.info('[MintScribe][04/completion] 다음 구간 이동 전 자동 확인', {
     section:state.index + 1,score:result.score,missing:result.missing,hinted:result.hinted,total:result.total
   });
-  // Correct and fully revealed words are locked: there is nothing left to retry.
-  if (result.correct + result.hinted === result.total && result.total > 0) {
+  // A fully locked answer can still have a low score: show it before continuing.
+  if (result.correct === result.total && result.total > 0) {
     result.continued = true;
     advanceReviewedCue();
     saveReviewProgress();
