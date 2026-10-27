@@ -336,7 +336,7 @@ function renderPractice() {
     ${practiceNoticeMarkup()}
     <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><span class="cue-label">CAPTION ${String(state.index + 1).padStart(2, '0')} / ${String(state.selected.length).padStart(2, '0')}</span><h2>${esc(c.speaker)}</h2></div><div class="cue-navigation"><select id="cueJump" aria-label="${t('items')}">${state.selected.map((x, i) => `<option value="${i}" ${i === state.index ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${mmss(x.start)}</option>`).join('')}</select></div></div>
       <div class="cue-time">${mmss(c.start)} — ${mmss(c.end)} <span>·</span> ${duration(c)} <span>·</span> ${wordTokens(c.text).length} ${t('words')}</div>
-      <div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><button class="restart-button" data-action="restartAudio" ${state.sample ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}" title="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}">⏮</button><input class="seek-bar" id="seekBar" type="range" min="${c.start}" max="${c.end}" step="0.01" value="${c.start}" style="--seek-pct:0%" aria-label="${state.lang === 'ko' ? '재생 위치' : 'Playback position'}" aria-valuetext="${mmss(c.start)}" ${state.sample ? 'disabled' : ''}><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div>
+      <div class="player-anchor"><div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><button class="restart-button" data-action="restartAudio" ${state.sample ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}" title="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}">⏮</button><input class="seek-bar" id="seekBar" type="range" min="${c.start}" max="${c.end}" step="0.01" value="${c.start}" style="--seek-pct:0%" aria-label="${state.lang === 'ko' ? '재생 위치' : 'Playback position'}" aria-valuetext="${mmss(c.start)}" ${state.sample ? 'disabled' : ''}><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div></div>
       <div class="play-options"><button class="pill-btn ${state.loop ? 'active' : ''}" data-action="loop" aria-pressed="${state.loop}">↺ ${t('loop')}</button><select id="speed" class="speed-select" aria-label="${t('slow')}"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option></select><button class="pill-btn timer-pill ${state.paused ? '' : 'active'}" data-action="timer">${state.paused ? t('timerResume') : t('timerPause')}</button></div>
       ${state.sample ? `<div class="sample-note">${t('sampleNoAudio')}</div>` : ''}
       <div class="write-label"><span>${t('write')}</span><small>${state.lang === 'ko' ? '단어 아래 글자 수를 보고 입력하세요' : 'Use the letter count below each word'}</small></div>${wordInputsMarkup(c)}<textarea id="answer" class="hidden" tabindex="-1" aria-hidden="true">${esc(state.answers[c.id] || '')}</textarea>
@@ -348,8 +348,48 @@ function renderPractice() {
   bindSeekBar(c);
   bindAudioDiagnostics();
   bindWordInputs(c);
+  scheduleFloatingPlayer();
   $('#cueJump').addEventListener('change', event => { stopAudio(); state.index = Number(event.target.value); renderPractice(); });
 }
+
+// Keep the existing controls visible across both the writing and tools sections.
+// A placeholder preserves their original space; the audio element is untouched.
+let floatingPlayerFrame = 0;
+function updateFloatingPlayer() {
+  const player = document.querySelector('.practice-page .player');
+  const anchor = player?.parentElement;
+  if (!player || !anchor?.classList.contains('player-anchor')) return;
+  const enabled = window.matchMedia('(max-width:760px),(max-height:700px)').matches
+    || document.documentElement.classList.contains('keyboard-open');
+  const top = Math.max(0, parseFloat(getComputedStyle(player).top) || 0);
+  const bounds = anchor.getBoundingClientRect();
+  const floating = enabled && bounds.width > 0 && bounds.top < top;
+  if (floating) {
+    // Reserve height before taking the controls out of normal document flow.
+    anchor.style.height = `${player.getBoundingClientRect().height}px`;
+    player.style.left = `${bounds.left}px`;
+    player.style.width = `${bounds.width}px`;
+    player.classList.add('player-floating');
+    // Width changes (rotation, window resize) may change the controls' height.
+    anchor.style.height = `${player.getBoundingClientRect().height}px`;
+  } else {
+    player.classList.remove('player-floating');
+    player.style.removeProperty('left');
+    player.style.removeProperty('width');
+    anchor.style.removeProperty('height');
+  }
+}
+function scheduleFloatingPlayer() {
+  if (floatingPlayerFrame) return;
+  floatingPlayerFrame = requestAnimationFrame(() => {
+    floatingPlayerFrame = 0;
+    updateFloatingPlayer();
+  });
+}
+window.addEventListener('scroll', scheduleFloatingPlayer, {passive:true,capture:true});
+window.addEventListener('resize', scheduleFloatingPlayer, {passive:true});
+window.visualViewport?.addEventListener('resize', scheduleFloatingPlayer, {passive:true});
+window.visualViewport?.addEventListener('scroll', scheduleFloatingPlayer, {passive:true});
 
 function bindAudioDiagnostics() {
   const audio = $('#sourceAudio');
@@ -421,6 +461,7 @@ let keyboardFocusTimer;
 let keyboardViewportTimer;
 
 function keepFocusedWordVisible() {
+  scheduleFloatingPlayer();
   const input = document.activeElement;
   const viewport = window.visualViewport;
   if (!input?.classList.contains('word-input') || !viewport) {

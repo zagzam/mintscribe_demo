@@ -72,3 +72,21 @@ html[data-theme="dark"]::before { background: #202020; }
 html.keyboard-open .practice-page .listen-surface .player {
   top: calc(var(--mint-safe-top) + 8px);
 }
+
+/* Use the original player outside its card's sticky containment when scrolling.
+   A normal-flow anchor prevents jumps and restores its original position. */
+html .practice-page .player-anchor {
+  width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+}
+html .practice-page .listen-surface .player-anchor > .player {
+  position: static;
+  top: calc(var(--mint-safe-top) + 8px);
+}
+html .practice-page .listen-surface .player-anchor > .player.player-floating {
+  position: fixed;
+  z-index: 10;
+  margin: 0;
+  box-shadow: 0 8px 22px #10182726;
+}
