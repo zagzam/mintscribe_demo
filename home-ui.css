@@ -1,0 +1,66 @@
+/* Compact introduction and clear primary action for linked and local practice. */
+html .home-page {
+  height:auto;
+  align-items:start;
+  align-content:start;
+  justify-content:start;
+}
+html .home-page .home-story,
+html .home-page .neon-load {
+  width:100%;
+  height:auto;
+  min-height:0;
+  max-height:none;
+  padding:28px;
+}
+html .home-page .home-story { justify-content:flex-start; }
+html .home-story h1 {
+  margin:12px 0;
+  max-width:none;
+  font-size:clamp(18px,1.8vw,25px);
+  line-height:1.45;
+  letter-spacing:-.6px;
+  overflow-wrap:anywhere;
+}
+html .home-story p {
+  margin:0;
+  max-width:none;
+  font-size:15px;
+  line-height:1.7;
+}
+html .home-story .eyebrow { font-size:11px; }
+html .neon-load .load-head h2 { margin:0 0 8px; font-size:24px; font-weight:800; }
+html .neon-load .load-head p { margin:0; font-size:15px; line-height:1.7; }
+html .neon-load .load-mode { flex:none; margin-top:18px; }
+html .neon-load .load-bottom {
+  grid-template-columns:minmax(0,1fr) minmax(136px,.8fr);
+  gap:12px;
+  margin-top:24px;
+}
+html .neon-load .scope-label { margin-bottom:8px; font-size:15px; }
+html .neon-load .load-bottom .text-input,
+html .neon-load .load-bottom .primary-btn {
+  height:50px;
+  min-height:50px;
+  padding:10px 14px;
+}
+html .neon-load .load-bottom .text-input { font-size:16px; }
+html .neon-load .load-bottom .primary-btn { font-size:17px; font-weight:800; }
+html .neon-load .load-footer { margin-top:14px; }
+html .neon-load .load-footer span { flex:1; text-align:left; font-size:13px; line-height:1.7; }
+@media(max-width:760px) {
+  html .home-page { gap:12px; }
+  html .home-page .home-story,
+  html .home-page .neon-load { padding:20px; }
+  html .home-story h1 { margin:10px 0; font-size:18px; }
+  html .home-story p,
+  html .neon-load .load-head p { font-size:14px; line-height:1.65; }
+  html .neon-load .load-head h2 { font-size:22px; }
+  html .neon-load .load-bottom { grid-template-columns:minmax(0,1fr) minmax(120px,.8fr); gap:10px; }
+  html .neon-load .scope-label { font-size:14px; }
+  html .neon-load .load-bottom .primary-btn { font-size:16px; }
+}
+@media(max-width:360px) {
+  html .neon-load .load-bottom { grid-template-columns:minmax(0,1fr); }
+  html .neon-load .load-bottom .primary-btn { width:100%; }
+}

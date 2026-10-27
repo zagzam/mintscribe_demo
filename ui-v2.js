@@ -42,19 +42,17 @@ function renderHome() {
     ? launchErrorMessage() : '';
   shell(`<main class="page home-page">
     <section class="home-story">
-      <div class="eyebrow">MINTSCRIBE 2.0 / LISTENING LAB</div>
-      <h1>${t('heroTitle').replace('\n', '<br>')}</h1>
+      <div class="eyebrow">MINTSCRIBE 2.0</div>
+      <h1>${esc(t('heroTitle').replace('\n', ' '))}</h1>
       <p>${t('heroBody')}</p>
-      <div class="story-steps"><span>01 <b>${('불러오기')}</b></span><span>02 <b>${('듣고 쓰기')}</b></span><span>03 <b>${('확인하기')}</b></span></div>
-      <div class="story-orbit orbit-one"></div><div class="story-orbit orbit-two"></div>
     </section>
     <section class="load-panel neon-load">
-      <div class="load-head"><div><div class="eyebrow">START HERE</div><h2>${t('loadTitle')}</h2><p>${t('loadBody')}</p></div><span class="load-number">01</span></div>
+      <div class="load-head"><div>${integrated ? '<h2>수업 파일 확인</h2><p>민트 홈페이지에서 연결된 수업입니다. 음원과 자막은 변경할 수 없습니다.</p>' : `<div class="eyebrow">START HERE</div><h2>${t('loadTitle')}</h2><p>${t('loadBody')}</p>`}</div>${integrated ? '' : '<span class="load-number">01</span>'}</div>
       ${integrated ? '' : `<div class="load-switch" role="tablist" aria-label="${t('loadTitle')}"><button data-action="loadTab" data-tab="files" role="tab" aria-selected="${mode === 'files'}" class="${mode === 'files' ? 'active' : ''}">⇧ ${('파일 선택')}</button><button data-action="loadTab" data-tab="url" role="tab" aria-selected="${mode === 'url'}" class="${mode === 'url' ? 'active' : ''}">⌁ URL</button></div>`}
       ${integrated ? linkedClassMarkup() : mode === 'files' ? `<div class="load-mode"><div id="drop" class="drop-zone"><div class="upload-icon">⇧</div><strong>${t('dropTitle')}</strong><p>${t('dropBody')}</p><div class="file-buttons"><button class="secondary-btn" data-action="audioPick">♪ ${t('audioFile')}</button><button class="secondary-btn" data-action="textPick">≡ ${t('transcriptFile')}</button></div></div><input id="audioInput" class="hidden" type="file" accept=".m4a,.mp3,audio/*"><input id="textInput" class="hidden" type="file" accept=".vtt,.txt,text/plain,text/vtt"><div class="file-status"><div class="file-line"><b>♪ ${esc(state.audioFile?.name || '—')}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(state.textFile?.name || '—')}</b><span>TEXT</span></div></div></div>` : `<div class="load-mode url-mode"><label>${t('audioUrl')}<input class="text-input" id="audioUrl" type="url" placeholder="https://…/class.m4a" value="${esc(state.audioUrlInput || '')}"></label><label>${t('textUrl')}<input class="text-input" id="textUrl" type="url" placeholder="https://…/class.vtt" value="${esc(state.textUrlInput || '')}"></label><p class="helper">${t('cors')}</p></div>`}
       <div class="load-bottom"><div><label class="scope-label" for="scope">${t('choosePractice')}</label>${scopeSelect()}</div><button class="primary-btn" data-action="${mode === 'files' ? 'start' : 'urlLoad'}" ${state.loadingUrls || linkError || (mode === 'files' && !filesSelected) ? 'disabled' : ''}>${state.loadingUrls ? (('불러오는 중…')) : t('start')} <span>↗</span></button></div>
       ${state.error || linkError ? `<div class="notice error" role="alert">${esc(state.error || linkError)}</div>` : ''}
-      <div class="load-footer"><span>${t('offline')}</span></div>
+      <div class="load-footer"><span>${integrated ? '연습 내용은 현재 브라우저에 자동 저장되어 이어서 연습할 수 있습니다.' : t('offline')}</span></div>
     </section>
   </main>`);
   if (!integrated && mode === 'files') bindHome();
@@ -66,7 +64,7 @@ function linkedClassMarkup() {
     try { return decodeURIComponent(new URL(value, location.href).pathname.split('/').pop()) || '—'; }
     catch (_) { return '—'; }
   };
-  return `<div class="load-mode"><p class="helper">${('민트 홈페이지에서 연결된 수업입니다. 음원과 자막은 변경할 수 없습니다.')}</p><div class="file-status"><div class="file-line"><b>♪ ${esc(name(launch.audioUrl))}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(name(launch.transcriptUrl))}</b><span>TEXT</span></div></div></div>`;
+  return `<div class="load-mode"><div class="file-status"><div class="file-line"><b>♪ ${esc(name(launch.audioUrl))}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(name(launch.transcriptUrl))}</b><span>TEXT</span></div></div></div>`;
 }
 
 document.addEventListener('click', event => {
