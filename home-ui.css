@@ -50,8 +50,8 @@ html .neon-load .load-bottom .primary-btn {
   min-height:50px;
   padding:10px 14px;
 }
-html .neon-load .load-bottom .text-input { font-size:16px; }
-html .neon-load .load-bottom .primary-btn { font-size:17px; font-weight:800; }
+html .neon-load .load-bottom .text-input { font-size:15px; }
+html .neon-load .load-bottom .primary-btn { font-size:15px; font-weight:800; }
 html .neon-load .load-footer { margin-top:14px; }
 html .neon-load .load-footer span { flex:1; text-align:left; font-size:13px; line-height:1.7; }
 @media(max-width:760px) {
@@ -64,7 +64,8 @@ html .neon-load .load-footer span { flex:1; text-align:left; font-size:13px; lin
   html .neon-load .load-head h2 { font-size:22px; }
   html .neon-load .load-bottom { grid-template-columns:minmax(0,1fr) minmax(120px,.8fr); gap:10px; }
   html .neon-load .scope-label { font-size:14px; }
-  html .neon-load .load-bottom .primary-btn { font-size:16px; }
+  html .neon-load .load-bottom .text-input { font-size:16px; }
+  html .neon-load .load-bottom .primary-btn { font-size:15px; }
 }
 @media(max-width:360px) {
   html .neon-load .load-bottom { grid-template-columns:minmax(0,1fr); }
