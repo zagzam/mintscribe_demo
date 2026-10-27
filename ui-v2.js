@@ -548,23 +548,62 @@ function bindWordInputs(c) {
   const entry = $('#wordEntry');
   const inputs = [...entry.querySelectorAll('.word-input')];
   const words = wordTokens(c.text);
+  const isEditable = index => inputs[index]?.isConnected && !wordIsRevealed(c, index) && !wordIsCorrect(c, index);
+  const focusInput = index => {
+    const target = inputs[index];
+    if (!isEditable(index)) return false;
+    target.disabled = false;
+    if (document.activeElement !== target) target.focus({preventScroll:true});
+    return document.activeElement === target;
+  };
   const focusEditable = (from, direction) => {
     for (let i = from + direction; i >= 0 && i < inputs.length; i += direction) {
-      if (!inputs[i].disabled) { inputs[i].focus(); return; }
+      if (isEditable(i)) return focusInput(i);
     }
+    return false;
   };
-  const sync = () => {
+  const lockCompletedInputs = () => {
+    const hasUnfinished = inputs.some((_, i) => isEditable(i));
+    inputs.forEach((input, i) => {
+      const correct = wordIsCorrect(c, i);
+      input.closest('.word-slot').classList.toggle('correct', correct);
+      // Never end the active mobile editor before another editable field owns focus.
+      const keepEditor = hasUnfinished && document.activeElement === input;
+      input.disabled = (wordIsRevealed(c, i) || correct) && !keepEditor;
+    });
+  };
+  const sync = preferredIndex => {
     invalidateCueCheck(c, 'answer_changed');
     $('#practiceNotice')?.remove();
     const typed = state.wordAnswers[c.id] || [];
     const answer = typed.join(' ').trim();
     $('#answer').value = answer;
     state.answers[c.id] = answer;
-    inputs.forEach((input, i) => {
-      const correct = wordIsCorrect(c, i);
-      input.closest('.word-slot').classList.toggle('correct', correct);
-      input.disabled = wordIsRevealed(c, i) || correct;
-    });
+    const active = document.activeElement;
+    const activeIndex = inputs.indexOf(active);
+    let nextIndex = -1;
+    const from = preferredIndex ?? Math.max(0, activeIndex);
+    for (let i = from; i < inputs.length; i++) {
+      if (isEditable(i)) { nextIndex = i; break; }
+    }
+    if (nextIndex < 0 && activeIndex >= 0 && isEditable(activeIndex)) nextIndex = activeIndex;
+    if (nextIndex < 0) nextIndex = inputs.findIndex((_, i) => isEditable(i));
+    if (nextIndex >= 0) focusInput(nextIndex);
+    lockCompletedInputs();
+    // A mobile IME may finish its native commit after this event. Retry only
+    // while the original completed field still owns focus, never after a tap elsewhere.
+    if (activeIndex >= 0 && !isEditable(activeIndex) && document.activeElement === active && nextIndex >= 0) {
+      requestAnimationFrame(() => {
+        if (!entry.isConnected || current()?.id !== c.id) return;
+        if (document.activeElement === active) {
+          const target = inputs.findIndex((_, i) => i >= nextIndex && isEditable(i));
+          if (target >= 0 && !focusInput(target)) {
+            console.warn('[MintScribe][input] 다음 입력 칸으로 포커스 이동을 확인하지 못했습니다.', {section:state.index + 1,wordIndex:target + 1});
+          }
+        }
+        lockCompletedInputs();
+      });
+    }
     if (state.panel === 'hint') { const content = $('.tool-content'); if (content) content.innerHTML = hintMarkup(c); }
     if (state.panel === 'review') { const content = $('.tool-content'); if (content) content.innerHTML = reviewMarkup(c, null); }
     document.querySelector('[data-panel="review"] i')?.remove();
@@ -572,15 +611,25 @@ function bindWordInputs(c) {
 
   };
   inputs.forEach((input, i) => {
+    let composing = false;
+    let lastHandledValue = null;
     const handleInput = event => {
-      if (event.isComposing) return;
+      if (event.isComposing || composing || !entry.isConnected || current()?.id !== c.id) return;
+      // Ignore the old editor's trailing input event after a composition-end handoff.
+      if (wordIsRevealed(c, i) || wordIsCorrect(c, i)) {
+        const stored = (state.wordAnswers[c.id] || [])[i] || '';
+        if (input.value !== stored) input.value = stored;
+        return;
+      }
+      if (input.value === lastHandledValue) return;
+      lastHandledValue = input.value;
       const typed = state.wordAnswers[c.id] || (state.wordAnswers[c.id] = []);
       const pieces = input.value.trim().split(/\s+/);
       if (pieces.length > 1) {
         const targets = inputs.map((candidate, index) => !candidate.disabled && index >= i ? index : -1).filter(index => index >= 0);
         pieces.forEach((piece, offset) => { const index = targets[offset]; if (index !== undefined) { typed[index] = piece; inputs[index].value = piece; } });
-        focusEditable(targets[Math.min(pieces.length, targets.length) - 1] ?? i, 1);
-        sync();
+        lastHandledValue = input.value;
+        sync((targets[Math.min(pieces.length, targets.length) - 1] ?? i) + 1);
         return;
       }
       let remaining = input.value;
@@ -602,14 +651,15 @@ function bindWordInputs(c) {
       } else if (lastCorrect < 0) {
         typed[i] = input.value;
       }
-      if (lastCorrect >= 0) {
-        if (remaining && position < inputs.length && !inputs[position].disabled) inputs[position].focus();
-        else focusEditable(lastCorrect, 1);
-      }
-      sync();
+      lastHandledValue = input.value;
+      sync(lastCorrect >= 0 ? (remaining && position < inputs.length ? position : lastCorrect + 1) : i);
     };
     input.addEventListener('input', handleInput);
-    input.addEventListener('compositionend', handleInput);
+    input.addEventListener('compositionstart', () => { composing = true; });
+    input.addEventListener('compositionend', event => { composing = false; handleInput(event); });
+    input.addEventListener('blur', () => {
+      requestAnimationFrame(() => { if (entry.isConnected && current()?.id === c.id) lockCompletedInputs(); });
+    });
     input.addEventListener('keydown', event => {
       if (event.key === ' ' && input.value.trim()) { event.preventDefault(); focusEditable(i, 1); }
       if (event.key === 'Backspace' && !input.value) focusEditable(i, -1);
