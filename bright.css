@@ -5,7 +5,7 @@ body{background:linear-gradient(135deg,#f8faf9,#eff6f4 58%,#f9f9f6);color:#182b3
 button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline-color:#137e73}
 .topbar{background:#fff;border-bottom:1px solid #d8e5e5;box-shadow:0 2px 14px #2443490a}
 .brand{color:#152b32}.brand-mark{background:linear-gradient(135deg,#53ccb4,#78adc6 72%,#8a92cb);color:#092a31;box-shadow:0 5px 15px #2f9e9640}
-.tag{background:#e8f5ef;color:#176b5d;border-color:#badbd0}.lang-toggle{background:#eef3f3;border-color:#d3e0e2}.lang-toggle button{color:#4c646e}.lang-toggle button.active{background:#fff;color:#174b52;box-shadow:0 1px 5px #183c461a}
+.tag{background:#e8f5ef;color:#176b5d;border-color:#badbd0}
 .eyebrow{color:#167b70}.helper,.footnote{color:#536e78}.notice{background:#fff3e7;color:#85511e}.notice.error{background:#fff0f1;color:#a3364f}
 .ghost-btn,.secondary-btn,.pill-btn,.speed-select,.text-input{background:#fff;color:#263f49;border-color:#bbced2}.ghost-btn:hover,.secondary-btn:hover,.pill-btn:hover{background:#eef8f5;border-color:#68ac9f}
 .primary-btn{background:#116f60;color:#fff;box-shadow:0 7px 18px #1688732c}.primary-btn:hover{background:#0c594e}.text-input::placeholder,textarea::placeholder{color:#687e85}.text-input:focus,textarea:focus{border-color:#178b78;box-shadow:0 0 0 3px #178b7820}

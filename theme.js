@@ -15,15 +15,11 @@
 
     const button = document.querySelector('.theme-toggle');
     if (button) {
-      const korean = document.documentElement.lang === 'ko';
-      const action = korean
-        ? (dark ? '라이트 모드로 전환' : '다크 모드로 전환')
-        : (dark ? 'Switch to bright mode' : 'Switch to dark mode');
+
+      const action = (dark ? '라이트 모드로 전환' : '다크 모드로 전환');
       button.setAttribute('aria-label', action);
       button.title = action;
-      button.querySelector('span').textContent = korean
-        ? (dark ? '다크' : '라이트')
-        : (dark ? 'Dark' : 'Bright');
+      button.querySelector('span').textContent = (dark ? '다크' : '라이트');
     }
   }
 

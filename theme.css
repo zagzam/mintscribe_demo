@@ -110,3 +110,15 @@ html.keyboard-open .practice-page .listen-surface .player{position:sticky;top:ca
  html .write-actions .caption-actions button{min-width:0;padding:8px 4px}
  html .write-actions .ai-caution{align-self:flex-end}
 }
+
+/* Lesson identity and the wider progress strip replace the old summary/time UI. */
+html .practice-head .lesson-teacher {
+  min-width:0;
+  margin:0;
+  font-size:clamp(16px,1.5vw,20px);
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+html .practice-page .session-strip {
+  grid-template-columns:minmax(0,1fr) repeat(2,auto);
+}

@@ -45,14 +45,14 @@ function renderHome() {
       <div class="eyebrow">MINTSCRIBE 2.0 / LISTENING LAB</div>
       <h1>${t('heroTitle').replace('\n', '<br>')}</h1>
       <p>${t('heroBody')}</p>
-      <div class="story-steps"><span>01 <b>${state.lang === 'ko' ? '불러오기' : 'Import'}</b></span><span>02 <b>${state.lang === 'ko' ? '듣고 쓰기' : 'Listen & write'}</b></span><span>03 <b>${state.lang === 'ko' ? '확인하기' : 'Review'}</b></span></div>
+      <div class="story-steps"><span>01 <b>${('불러오기')}</b></span><span>02 <b>${('듣고 쓰기')}</b></span><span>03 <b>${('확인하기')}</b></span></div>
       <div class="story-orbit orbit-one"></div><div class="story-orbit orbit-two"></div>
     </section>
     <section class="load-panel neon-load">
       <div class="load-head"><div><div class="eyebrow">START HERE</div><h2>${t('loadTitle')}</h2><p>${t('loadBody')}</p></div><span class="load-number">01</span></div>
-      ${integrated ? '' : `<div class="load-switch" role="tablist" aria-label="${t('loadTitle')}"><button data-action="loadTab" data-tab="files" role="tab" aria-selected="${mode === 'files'}" class="${mode === 'files' ? 'active' : ''}">⇧ ${state.lang === 'ko' ? '파일 선택' : 'Local files'}</button><button data-action="loadTab" data-tab="url" role="tab" aria-selected="${mode === 'url'}" class="${mode === 'url' ? 'active' : ''}">⌁ URL</button></div>`}
+      ${integrated ? '' : `<div class="load-switch" role="tablist" aria-label="${t('loadTitle')}"><button data-action="loadTab" data-tab="files" role="tab" aria-selected="${mode === 'files'}" class="${mode === 'files' ? 'active' : ''}">⇧ ${('파일 선택')}</button><button data-action="loadTab" data-tab="url" role="tab" aria-selected="${mode === 'url'}" class="${mode === 'url' ? 'active' : ''}">⌁ URL</button></div>`}
       ${integrated ? linkedClassMarkup() : mode === 'files' ? `<div class="load-mode"><div id="drop" class="drop-zone"><div class="upload-icon">⇧</div><strong>${t('dropTitle')}</strong><p>${t('dropBody')}</p><div class="file-buttons"><button class="secondary-btn" data-action="audioPick">♪ ${t('audioFile')}</button><button class="secondary-btn" data-action="textPick">≡ ${t('transcriptFile')}</button></div></div><input id="audioInput" class="hidden" type="file" accept=".m4a,.mp3,audio/*"><input id="textInput" class="hidden" type="file" accept=".vtt,.txt,text/plain,text/vtt"><div class="file-status"><div class="file-line"><b>♪ ${esc(state.audioFile?.name || '—')}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(state.textFile?.name || '—')}</b><span>TEXT</span></div></div></div>` : `<div class="load-mode url-mode"><label>${t('audioUrl')}<input class="text-input" id="audioUrl" type="url" placeholder="https://…/class.m4a" value="${esc(state.audioUrlInput || '')}"></label><label>${t('textUrl')}<input class="text-input" id="textUrl" type="url" placeholder="https://…/class.vtt" value="${esc(state.textUrlInput || '')}"></label><p class="helper">${t('cors')}</p></div>`}
-      <div class="load-bottom"><div><label class="scope-label" for="scope">${t('choosePractice')}</label>${scopeSelect()}</div><button class="primary-btn" data-action="${mode === 'files' ? 'start' : 'urlLoad'}" ${state.loadingUrls || linkError || (mode === 'files' && !filesSelected) ? 'disabled' : ''}>${state.loadingUrls ? (state.lang === 'ko' ? '불러오는 중…' : 'Loading…') : t('start')} <span>↗</span></button></div>
+      <div class="load-bottom"><div><label class="scope-label" for="scope">${t('choosePractice')}</label>${scopeSelect()}</div><button class="primary-btn" data-action="${mode === 'files' ? 'start' : 'urlLoad'}" ${state.loadingUrls || linkError || (mode === 'files' && !filesSelected) ? 'disabled' : ''}>${state.loadingUrls ? (('불러오는 중…')) : t('start')} <span>↗</span></button></div>
       ${state.error || linkError ? `<div class="notice error" role="alert">${esc(state.error || linkError)}</div>` : ''}
       <div class="load-footer"><span>${t('offline')}</span></div>
     </section>
@@ -66,7 +66,7 @@ function linkedClassMarkup() {
     try { return decodeURIComponent(new URL(value, location.href).pathname.split('/').pop()) || '—'; }
     catch (_) { return '—'; }
   };
-  return `<div class="load-mode"><p class="helper">${state.lang === 'ko' ? '민트 홈페이지에서 연결된 수업입니다. 음원과 자막은 변경할 수 없습니다.' : 'This class was opened from the Mint website. Its recording and transcript cannot be changed.'}</p><div class="file-status"><div class="file-line"><b>♪ ${esc(name(launch.audioUrl))}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(name(launch.transcriptUrl))}</b><span>TEXT</span></div></div></div>`;
+  return `<div class="load-mode"><p class="helper">${('민트 홈페이지에서 연결된 수업입니다. 음원과 자막은 변경할 수 없습니다.')}</p><div class="file-status"><div class="file-line"><b>♪ ${esc(name(launch.audioUrl))}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(name(launch.transcriptUrl))}</b><span>TEXT</span></div></div></div>`;
 }
 
 document.addEventListener('click', event => {
@@ -131,10 +131,10 @@ function invalidateCueCheck(c, reason) {
 function practiceNoticeMarkup() {
   const notice = state.practiceNotice;
   if (!notice || notice.cueId !== current()?.id) return '';
-  const ko = state.lang === 'ko';
+
   const message = notice.code === 'EMPTY_ANSWER'
-    ? (ko ? '한 단어 이상 입력하거나 AI 단어를 공개한 뒤 확인하기를 눌러 주세요.' : 'Enter at least one word or reveal an AI word, then check your answer.')
-    : (ko ? `아직 확인하지 않은 구간이 ${notice.remaining}개 있습니다. ${state.index + 1}번 구간부터 확인해 주세요. 오답이나 일부 빈칸이 있어도 괜찮습니다.` : `${notice.remaining} caption(s) still need checking. Start with caption ${state.index + 1}. Incorrect words and some blanks are allowed.`);
+    ? (('한 단어 이상 입력하거나 AI 단어를 공개한 뒤 확인하기를 눌러 주세요.'))
+    : ((`아직 확인하지 않은 구간이 ${notice.remaining}개 있습니다. ${state.index + 1}번 구간부터 확인해 주세요. 오답이나 일부 빈칸이 있어도 괜찮습니다.`));
   return `<div id="practiceNotice" class="notice error" role="alert" tabindex="-1">${esc(message)}</div>`;
 }
 
@@ -177,17 +177,17 @@ function hintMarkup(c) {
   const remainingLabel = Number.isFinite(allowance) ? remaining : '∞';
   const allowanceLabel = Number.isFinite(allowance) ? allowance : '∞';
   const visible = correct ? esc((state.wordAnswers[c.id] || [])[i]) : level === 0 ? '＿'.repeat(Math.min(word.length, 14)) : level === 1 ? `<span class="system-letter">${esc(word[0])}</span>${'＿'.repeat(Math.min(word.length - 1, 13))}` : `<span class="system-letter">${esc(word)}</span>`;
-  const nextHint = word.length === 1 || level > 0 ? (state.lang === 'ko' ? '단어 전체 보기' : 'Show whole word') : (state.lang === 'ko' ? '첫 글자 보기' : 'Show first letter');
-  return `<div class="tool-intro"><span class="tool-kicker">${state.lang === 'ko' ? '막힌 단어를 선택하세요' : 'Select a word you need help with'}</span><strong>${state.lang === 'ko' ? '남은 세션 힌트' : 'Session hints left'} <em>${remainingLabel}</em> / ${allowanceLabel}</strong></div>
-    <div class="hint-word-list" aria-label="${state.lang === 'ko' ? '단어별 힌트' : 'Word hints'}">${words.map((w, n) => { const done = wordIsCorrect(c, n), reveal = h.levels[n] || 0; const label = done ? `✓ ${esc((state.wordAnswers[c.id] || [])[n])}` : reveal === 2 ? esc(w) : reveal === 1 ? `${esc(w[0])}${'·'.repeat(Math.min(w.length - 1, 10))}` : `${w.length} ${state.lang === 'ko' ? '글자' : 'letters'}`; return `<button data-action="hintSelect" data-index="${n}" class="hint-word ${n === i ? 'current' : ''} ${done ? 'correct' : reveal ? 'system-shown' : ''}" aria-label="${n + 1}: ${w.length} ${state.lang === 'ko' ? '글자' : 'letters'}"><small>${n + 1}</small><b>${label}</b></button>`; }).join('')}</div>
-    <div class="hint-focus"><div><small>${state.lang === 'ko' ? `${i + 1}번 단어 · ${word.length}글자` : `Word ${i + 1} · ${word.length} letters`}</small><div class="hint-focus-word ${correct ? 'correct' : ''}">${visible}</div></div><button class="reveal-btn" data-action="reveal" ${correct || level >= 2 || !remaining ? 'disabled' : ''}>✦ ${correct ? (state.lang === 'ko' ? '직접 맞혔어요' : 'You got it') : level >= 2 ? (state.lang === 'ko' ? '단어 확인 완료' : 'Word revealed') : !remaining ? (state.lang === 'ko' ? '힌트를 모두 썼어요' : 'No hints left') : nextHint}</button></div>
-    <p class="tool-note">✧ ${state.lang === 'ko' ? '파란색은 직접 맞힌 단어, 회색은 AI 자막에서 보여 준 글자예요. 흰색은 아직 맞히지 못한 단어예요.' : 'Blue marks words you got right; gray marks letters revealed from the AI transcript. White means not yet correct.'} ${t('aiNotice')}</p>`;
+  const nextHint = word.length === 1 || level > 0 ? (('단어 전체 보기')) : (('첫 글자 보기'));
+  return `<div class="tool-intro"><span class="tool-kicker">${('막힌 단어를 선택하세요')}</span><strong>${('남은 세션 힌트')} <em>${remainingLabel}</em> / ${allowanceLabel}</strong></div>
+    <div class="hint-word-list" aria-label="${('단어별 힌트')}">${words.map((w, n) => { const done = wordIsCorrect(c, n), reveal = h.levels[n] || 0; const label = done ? `✓ ${esc((state.wordAnswers[c.id] || [])[n])}` : reveal === 2 ? esc(w) : reveal === 1 ? `${esc(w[0])}${'·'.repeat(Math.min(w.length - 1, 10))}` : `${w.length} ${('글자')}`; return `<button data-action="hintSelect" data-index="${n}" class="hint-word ${n === i ? 'current' : ''} ${done ? 'correct' : reveal ? 'system-shown' : ''}" aria-label="${n + 1}: ${w.length} ${('글자')}"><small>${n + 1}</small><b>${label}</b></button>`; }).join('')}</div>
+    <div class="hint-focus"><div><small>${(`${i + 1}번 단어 · ${word.length}글자`)}</small><div class="hint-focus-word ${correct ? 'correct' : ''}">${visible}</div></div><button class="reveal-btn" data-action="reveal" ${correct || level >= 2 || !remaining ? 'disabled' : ''}>✦ ${correct ? (('직접 맞혔어요')) : level >= 2 ? (('단어 확인 완료')) : !remaining ? (('힌트를 모두 썼어요')) : nextHint}</button></div>
+    <p class="tool-note">✧ ${('파란색은 직접 맞힌 단어, 회색은 AI 자막에서 보여 준 글자예요. 흰색은 아직 맞히지 못한 단어예요.')} ${t('aiNotice')}</p>`;
 }
 
 function reviewMarkup(c, result) {
-  if (!result) return `<div class="empty-panel"><span>◎</span><b>${state.lang === 'ko' ? '받아쓰기를 확인하면 결과가 여기에 표시돼요.' : 'Check your transcription to see the result here.'}</b><p>${t('reviewCaveat')}</p></div>`;
+  if (!result) return `<div class="empty-panel"><span>◎</span><b>${('받아쓰기를 확인하면 결과가 여기에 표시돼요.')}</b><p>${t('reviewCaveat')}</p></div>`;
   const revealed = wordTokens(c.text).filter((_, i) => wordIsRevealed(c, i)).length;
-  return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${esc(c.text)}</p></div><p class="tool-note">✧ ${revealed ? (state.lang === 'ko' ? `AI가 공개한 단어 ${revealed}개는 정답으로 인정하지 않았어요. ` : `${revealed} AI-revealed word${revealed === 1 ? '' : 's'} received no credit. `) : ''}${t('reviewCaveat')}</p>`;
+  return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${esc(c.text)}</p></div><p class="tool-note">✧ ${revealed ? ((`AI가 공개한 단어 ${revealed}개는 정답으로 인정하지 않았어요. `)) : ''}${t('reviewCaveat')}</p>`;
 }
 
 function scoreColor(score) {
@@ -201,8 +201,8 @@ function shadowMarkup(c) {
   const average = scores ? (scores.reduce((n, item) => n + item.score, 0) / scores.length).toFixed(1) : null;
   return `<div class="shadow-intro"><div><span class="tool-kicker">${t('shadow')}</span><p>${t('shadowBody')}</p></div><span class="demo-badge">${t('demoLabel')}</span></div>
     <div class="shadow-controls"><button class="record-btn ${state.recording ? 'recording' : ''}" data-action="record"><i></i>${state.recording ? t('stop') : t('record')}</button>${state.recordUrl ? `<audio id="selfAudio" controls src="${state.recordUrl}"></audio><a class="download-btn" download="mintscribe-shadowing.webm" href="${state.recordUrl}" title="${t('download')}">↓</a>` : ''}</div>
-    <button class="score-trigger" data-action="demoScore">✦ ${state.recordUrl ? t('demoScore') : (state.lang === 'ko' ? '시연 점수 미리보기' : 'Preview demo scores')} →</button>
-    ${scores ? `<div class="score-heading"><span>${state.lang === 'ko' ? '문장 평균 · 시연 점수' : 'Sentence average · demo'}</span><strong>${average}<small> / 100</small></strong></div><div class="score-flow">${scores.map(x => `<span class="score-word" style="--tone:${scoreColor(x.score)}" title="${x.word}: ${x.score.toFixed(1)}"><b>${esc(x.word)}</b><small>${x.score.toFixed(0)}</small></span>`).join('')}</div><div class="score-legend"><div class="legend-gradient"><span class="pass-marker" title="80 ${state.lang === 'ko' ? '통과' : 'pass'}"></span></div><div class="legend-labels"><span>0 · ${state.lang === 'ko' ? '다시 연습' : 'Practice'}</span><span class="pass-label">80+ ${state.lang === 'ko' ? '통과' : 'Pass'}</span><span>100 · ${state.lang === 'ko' ? '매우 좋음' : 'Excellent'}</span></div></div>` : `<div class="shadow-placeholder">♬ <span>${state.lang === 'ko' ? '녹음 후 내 발음을 듣고, 시연 점수를 확인할 수 있어요.' : 'Record, listen back, then explore the demo scores.'}</span></div>`}`;
+    <button class="score-trigger" data-action="demoScore">✦ ${state.recordUrl ? t('demoScore') : (('시연 점수 미리보기'))} →</button>
+    ${scores ? `<div class="score-heading"><span>${('문장 평균 · 시연 점수')}</span><strong>${average}<small> / 100</small></strong></div><div class="score-flow">${scores.map(x => `<span class="score-word" style="--tone:${scoreColor(x.score)}" title="${x.word}: ${x.score.toFixed(1)}"><b>${esc(x.word)}</b><small>${x.score.toFixed(0)}</small></span>`).join('')}</div><div class="score-legend"><div class="legend-gradient"><span class="pass-marker" title="80 ${('통과')}"></span></div><div class="legend-labels"><span>0 · ${('다시 연습')}</span><span class="pass-label">80+ ${('통과')}</span><span>100 · ${('매우 좋음')}</span></div></div>` : `<div class="shadow-placeholder">♬ <span>${('녹음 후 내 발음을 듣고, 시연 점수를 확인할 수 있어요.')}</span></div>`}`;
 }
 
 function punctuatedStudentLine(c) {
@@ -236,15 +236,15 @@ function punctuatedStudentLine(c) {
 }
 
 function summaryExportMarkup() {
-  const title = state.lang === 'ko' ? '나의 수업 받아쓰기' : 'My class transcription';
+  const title = ('나의 수업 받아쓰기');
   const lines = state.selected.map((c, i) => {
     const sentence = punctuatedStudentLine(c);
-    return `<p style="display:flex;gap:14px;align-items:baseline;margin:0;padding:13px 0;border-bottom:1px solid #E1E1E1;color:#242424;font:500 16px/1.7 Pretendard,Arial,sans-serif;"><span style="flex:none;color:#777777;font:700 11px/1.7 Pretendard,Arial,sans-serif;">${String(i + 1).padStart(2, '0')}</span><span>${sentence ? esc(sentence) : `<em style="color:#999999;">${state.lang === 'ko' ? '미작성' : 'Not transcribed'}</em>`}</span></p>`;
+    return `<p style="display:flex;gap:14px;align-items:baseline;margin:0;padding:13px 0;border-bottom:1px solid #E1E1E1;color:#242424;font:500 16px/1.7 Pretendard,Arial,sans-serif;"><span style="flex:none;color:#777777;font:700 11px/1.7 Pretendard,Arial,sans-serif;">${String(i + 1).padStart(2, '0')}</span><span>${sentence ? esc(sentence) : `<em style="color:#999999;">${('미작성')}</em>`}</span></p>`;
   }).join('');
   return `<section style="background:#ffffff;border:1px solid #E1E1E1;border-radius:8px;padding:clamp(20px,3vw,34px);">
     <div style="color:#0F91FF;font:700 11px/1.4 Pretendard,Arial,sans-serif;letter-spacing:1.5px;">MINTSCRIBE 2.0 · TRANSCRIPT</div>
     <h2 style="color:#242424;font:700 26px/1.35 Pretendard,Arial,sans-serif;margin:7px 0 4px;">${title}</h2>
-    <p style="color:#777777;font:400 12px/1.6 Pretendard,Arial,sans-serif;margin:0 0 14px;">${state.lang === 'ko' ? '직접 받아쓴 문장 · 구두점과 대문자는 AI 자막을 참고해 정리했어요.' : 'Your words, with punctuation and capitalization guided by the AI transcript.'}</p>
+    <p style="color:#777777;font:400 12px/1.6 Pretendard,Arial,sans-serif;margin:0 0 14px;">${('직접 받아쓴 문장 · 구두점과 대문자는 AI 자막을 참고해 정리했어요.')}</p>
     <div>${lines}</div>
   </section>
   <aside style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;background:#ffffff;border:1px solid #E1E1E1;border-radius:8px;padding:17px 19px;margin-top:14px;font-family:Pretendard,Arial,sans-serif;color:#242424;">
@@ -275,13 +275,13 @@ function renderSummary() {
   state.view = 'summary';
   const done = Object.keys(state.results).length;
   const rows = state.selected.map((c, i) => `<div class="summary-row"><span>${String(i + 1).padStart(2, '0')} · ${mmss(c.start)}</span><span>${state.results[c.id] ? state.results[c.id].score + '%' : '—'}</span></div>`).join('');
-  shell(`<main class="page summary summary-v2"><header class="summary-v2-head"><div><div class="eyebrow">MINTSCRIBE 2.0 / REVIEW</div><h1>${state.lang === 'ko' ? '내가 받아쓴 수업' : 'What I heard in class'}</h1><p>${state.lang === 'ko' ? '선생님의 말에서 직접 받아쓴 내용을 한눈에 확인하세요.' : 'Review the teacher’s words you transcribed.'}</p></div><button class="summary-copy-btn" data-action="copySummary" aria-label="${state.lang === 'ko' ? '받아쓰기 HTML 복사' : 'Copy transcription HTML'}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>${state.lang === 'ko' ? 'HTML 복사' : 'Copy HTML'}</span></button></header>
+  shell(`<main class="page summary summary-v2"><header class="summary-v2-head"><div><div class="eyebrow">MINTSCRIBE 2.0 / REVIEW</div><h1>${('내가 받아쓴 수업')}</h1><p>${('선생님의 말에서 직접 받아쓴 내용을 한눈에 확인하세요.')}</p></div><button class="summary-copy-btn" data-action="copySummary" aria-label="${('받아쓰기 HTML 복사')}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>${('HTML 복사')}</span></button></header>
     <div id="copyStatus" class="copy-status" role="status" aria-live="polite"></div>
     <div id="exportView" class="summary-export">${summaryExportMarkup()}</div>
     <div class="summary-compact"><div><small>${t('totalTime')}</small><b>${mmss(state.seconds)}</b></div><div><small>${t('completed')}</small><b>${done} / ${state.selected.length}</b></div><div><small>${t('avg')}</small><b>${done ? avgScore() + '%' : '—'}</b></div></div>
-    <details class="summary-details"><summary>${state.lang === 'ko' ? '문장별 점수 보기' : 'View scores by caption'}</summary><div class="summary-list">${rows}</div></details>
+    <details class="summary-details"><summary>${('문장별 점수 보기')}</summary><div class="summary-list">${rows}</div></details>
     ${window.MintScribeSubmission.markup()}
-    <div class="summary-v2-actions"><button class="secondary-btn" data-action="returnPractice">← ${state.lang === 'ko' ? '연습으로 돌아가기' : 'Back to practice'}</button>${window.MintScribeLaunch.isIntegration ? '' : `<button class="secondary-btn" data-action="home">${t('newFiles')}</button>`}<button class="primary-btn" data-action="restart">${t('restart')} →</button></div>
+    <div class="summary-v2-actions"><button class="secondary-btn" data-action="returnPractice">← ${('연습으로 돌아가기')}</button>${window.MintScribeLaunch.isIntegration ? '' : `<button class="secondary-btn" data-action="home">${t('newFiles')}</button>`}<button class="primary-btn" data-action="restart">${t('restart')} →</button></div>
     <p class="footnote">${t('reviewCaveat')}</p>
   </main>`);
   window.MintScribeSubmission.syncUI();
@@ -291,7 +291,7 @@ async function copySummaryHtml() {
   const view = $('#exportView');
   if (!view) return;
   const html = view.innerHTML;
-  const plain = state.selected.map((c, i) => `${i + 1}. ${punctuatedStudentLine(c) || (state.lang === 'ko' ? '미작성' : 'Not transcribed')}`).join('\n') + '\n\nMintScribe 2.0 · https://zagzam.github.io/mintscribe_demo/';
+  const plain = state.selected.map((c, i) => `${i + 1}. ${punctuatedStudentLine(c) || (('미작성'))}`).join('\n') + '\n\nMintScribe 2.0 · https://zagzam.github.io/mintscribe_demo/';
   let copied = false;
   try {
     if (navigator.clipboard?.write && window.ClipboardItem) {
@@ -306,7 +306,7 @@ async function copySummaryHtml() {
     selection.removeAllRanges();
   }
   const status = $('#copyStatus');
-  status.textContent = copied ? (state.lang === 'ko' ? '받아쓰기와 MintScribe 카드가 복사됐어요.' : 'Transcription and attribution copied.') : (state.lang === 'ko' ? '복사하지 못했어요. 다시 시도해 주세요.' : 'Copy failed. Please try again.');
+  status.textContent = copied ? (('받아쓰기와 MintScribe 카드가 복사됐어요.')) : (('복사하지 못했어요. 다시 시도해 주세요.'));
 }
 
 function wordInputsMarkup(c) {
@@ -316,7 +316,7 @@ function wordInputsMarkup(c) {
     const word = words[i] || '', revealed = wordIsRevealed(c, i);
     const value = revealed ? word : typed[i] || '', correct = word && wordIsCorrect(c, i);
     const length = word.length;
-    return `<label class="word-slot ${revealed ? 'revealed' : correct ? 'correct' : ''}" style="--slot-width:${Math.min(Math.max(length, 3), 16)}ch"><span class="slot-number">${i + 1}</span><input class="word-input" data-index="${i}" type="text" value="${esc(value)}" autocomplete="off" autocapitalize="off" spellcheck="false" ${revealed || correct ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? `${i + 1}번 단어, ${revealed ? 'AI 힌트로 공개됨' : correct ? '정답' : `${length}글자`}` : `Word ${i + 1}, ${revealed ? 'revealed by AI hint' : correct ? 'correct' : `${length} letters`}`}" placeholder="${'·'.repeat(Math.min(length, 16))}"><span class="slot-length">${revealed ? (state.lang === 'ko' ? 'AI 힌트' : 'AI hint') : `${length} ${state.lang === 'ko' ? '글자' : 'letters'}`}</span></label>`;
+    return `<label class="word-slot ${revealed ? 'revealed' : correct ? 'correct' : ''}" style="--slot-width:${Math.min(Math.max(length, 3), 16)}ch"><span class="slot-number">${i + 1}</span><input class="word-input" data-index="${i}" type="text" value="${esc(value)}" autocomplete="off" autocapitalize="off" spellcheck="false" ${revealed || correct ? 'disabled' : ''} aria-label="${(`${i + 1}번 단어, ${revealed ? 'AI 힌트로 공개됨' : correct ? '정답' : `${length}글자`}`)}" placeholder="${'·'.repeat(Math.min(length, 16))}"><span class="slot-length">${revealed ? (('AI 힌트')) : `${length} ${('글자')}`}</span></label>`;
   }).join('')}</div>`;
 }
 
@@ -331,17 +331,17 @@ function renderPractice() {
   if (key && state.lastResultKey !== key) { state.panel = 'review'; state.compactToolOpen = true; state.lastResultKey = key; }
   const pct = progressPercent(), panel = state.panel || 'hint';
   shell(`<main class="page practice-page">
-    <div class="practice-head"><div><div class="eyebrow">${t('session')} / ${esc(state.textName)}</div><h1>${t('teacherLine')} <span>${state.index + 1} <i>/ ${state.selected.length}</i></span></h1></div><div class="head-buttons">${window.MintScribeLaunch.isIntegration ? '' : `<button class="ghost-btn" data-action="home">← <span>${t('back')}</span></button>`}<button class="ghost-btn" data-action="summary">${t('summary')} ↗</button></div></div>
-    <div class="session-strip"><div class="session-progress"><span>${t('progress')} <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('activeTime')}</small><b id="timeValue">${mmss(state.seconds)}</b></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.results).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>${t('pass')}</small><b>${Object.values(state.results).filter(x => x.score >= 80).length}/${state.selected.length}</b></div></div>
+    <div class="practice-head"><h1 class="lesson-teacher">${esc(window.MintScribeLaunch.teacherName || c.speaker || t('unknown'))} 강사님 수업</h1>${window.MintScribeLaunch.isIntegration ? '' : `<div class="head-buttons"><button class="ghost-btn" data-action="home">← <span>${t('back')}</span></button></div>`}</div>
+    <div class="session-strip"><div class="session-progress"><span>전체 진행도 <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.results).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>통과구간</small><b>${Object.values(state.results).filter(x => x.score >= 80).length}/${state.selected.length}</b></div></div>
     ${practiceNoticeMarkup()}
     <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><span class="cue-label">CAPTION ${String(state.index + 1).padStart(2, '0')} / ${String(state.selected.length).padStart(2, '0')}</span><h2>${esc(c.speaker)}</h2></div><div class="cue-navigation"><select id="cueJump" aria-label="${t('items')}">${state.selected.map((x, i) => `<option value="${i}" ${i === state.index ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${mmss(x.start)}</option>`).join('')}</select></div></div>
       <div class="cue-time">${mmss(c.start)} — ${mmss(c.end)} <span>·</span> ${duration(c)} <span>·</span> ${wordTokens(c.text).length} ${t('words')}</div>
-      <div class="player-anchor"><div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><button class="restart-button" data-action="restartAudio" ${state.sample ? 'disabled' : ''} aria-label="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}" title="${state.lang === 'ko' ? '처음부터 재생' : 'Play from beginning'}">⏮</button><input class="seek-bar" id="seekBar" type="range" min="${c.start}" max="${c.end}" step="0.01" value="${c.start}" style="--seek-pct:0%" aria-label="${state.lang === 'ko' ? '재생 위치' : 'Playback position'}" aria-valuetext="${mmss(c.start)}" ${state.sample ? 'disabled' : ''}><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div></div>
-      <div class="play-options"><button class="pill-btn ${state.loop ? 'active' : ''}" data-action="loop" aria-pressed="${state.loop}">↺ ${t('loop')}</button><select id="speed" class="speed-select" aria-label="${t('slow')}"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option></select><button class="pill-btn timer-pill ${state.paused ? '' : 'active'}" data-action="timer">${state.paused ? t('timerResume') : t('timerPause')}</button></div>
+      <div class="player-anchor"><div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><button class="restart-button" data-action="restartAudio" ${state.sample ? 'disabled' : ''} aria-label="${('처음부터 재생')}" title="${('처음부터 재생')}">⏮</button><input class="seek-bar" id="seekBar" type="range" min="${c.start}" max="${c.end}" step="0.01" value="${c.start}" style="--seek-pct:0%" aria-label="${('재생 위치')}" aria-valuetext="${mmss(c.start)}" ${state.sample ? 'disabled' : ''}><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div></div>
+      <div class="play-options"><button class="pill-btn ${state.loop ? 'active' : ''}" data-action="loop" aria-pressed="${state.loop}">↺ ${t('loop')}</button><select id="speed" class="speed-select" aria-label="${t('slow')}"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option></select></div>
       ${state.sample ? `<div class="sample-note">${t('sampleNoAudio')}</div>` : ''}
-      <div class="write-label"><span>${t('write')}</span><small>${state.lang === 'ko' ? '단어 아래 글자 수를 보고 입력하세요' : 'Use the letter count below each word'}</small></div>${wordInputsMarkup(c)}<textarea id="answer" class="hidden" tabindex="-1" aria-hidden="true">${esc(state.answers[c.id] || '')}</textarea>
-      <div class="write-actions"><div class="caption-actions"><button class="secondary-btn" data-action="prev" ${state.index === 0 ? 'disabled' : ''}>← ${state.lang === 'ko' ? '이전 자막' : 'Previous'}</button><button class="secondary-btn" data-action="check">${t('check')}</button><button class="primary-btn" data-action="next">${state.index === state.selected.length - 1 ? t('finish') : t('next')} →</button></div><span class="ai-caution">✦ AI STT ${state.lang === 'ko' ? '기준' : 'reference'}</span></div>
-    </section><section class="insight-surface"><div class="tool-tabs" role="tablist" aria-label="Practice tools"><button class="compact-write-tab" role="tab" data-action="toolClose">✎ ${state.lang === 'ko' ? '받아쓰기' : 'Write'}</button><button role="tab" data-action="panel" data-panel="hint" aria-selected="${panel === 'hint'}" class="${panel === 'hint' ? 'active' : ''}">✧ ${state.lang === 'ko' ? '힌트' : 'Hints'}</button><button role="tab" data-action="panel" data-panel="review" aria-selected="${panel === 'review'}" class="${panel === 'review' ? 'active' : ''}">◎ ${state.lang === 'ko' ? '확인' : 'Review'}${result ? '<i></i>' : ''}</button><button role="tab" data-action="panel" data-panel="shadow" aria-selected="${panel === 'shadow'}" class="${panel === 'shadow' ? 'active' : ''}">◉ ${state.lang === 'ko' ? '따라 말하기' : 'Shadowing'}</button></div><div class="tool-content">${panel === 'hint' ? hintMarkup(c) : panel === 'review' ? reviewMarkup(c, result) : shadowMarkup(c)}</div></section></div>
+      <div class="write-label"><span>${t('write')}</span><small>${('단어 아래 글자 수를 보고 입력하세요')}</small></div>${wordInputsMarkup(c)}<textarea id="answer" class="hidden" tabindex="-1" aria-hidden="true">${esc(state.answers[c.id] || '')}</textarea>
+      <div class="write-actions"><div class="caption-actions"><button class="secondary-btn" data-action="prev" ${state.index === 0 ? 'disabled' : ''}>← ${('이전 자막')}</button><button class="secondary-btn" data-action="check">${t('check')}</button><button class="primary-btn" data-action="next">${state.index === state.selected.length - 1 ? t('finish') : t('next')} →</button></div><span class="ai-caution">✦ AI STT ${('기준')}</span></div>
+    </section><section class="insight-surface"><div class="tool-tabs" role="tablist" aria-label="연습 도구"><button class="compact-write-tab" role="tab" data-action="toolClose">✎ ${('받아쓰기')}</button><button role="tab" data-action="panel" data-panel="hint" aria-selected="${panel === 'hint'}" class="${panel === 'hint' ? 'active' : ''}">✧ ${('힌트')}</button><button role="tab" data-action="panel" data-panel="review" aria-selected="${panel === 'review'}" class="${panel === 'review' ? 'active' : ''}">◎ ${('확인')}${result ? '<i></i>' : ''}</button><button role="tab" data-action="panel" data-panel="shadow" aria-selected="${panel === 'shadow'}" class="${panel === 'shadow' ? 'active' : ''}">◉ ${('따라 말하기')}</button></div><div class="tool-content">${panel === 'hint' ? hintMarkup(c) : panel === 'review' ? reviewMarkup(c, result) : shadowMarkup(c)}</div></section></div>
     <audio id="sourceAudio" src="${esc(state.audioUrl || '')}" preload="metadata"></audio>
   </main>`);
   bindPractice();
@@ -545,8 +545,8 @@ function bindWordInputs(c) {
     if (progress) progress.textContent = `${progressPercent()}%`;
     if (fill) fill.style.width = `${progressPercent()}%`;
     const stats = document.querySelectorAll('.session-strip .strip-stat b');
-    if (stats[1]) stats[1].textContent = Object.keys(state.results).length ? `${avgScore()}%` : '—';
-    if (stats[2]) stats[2].textContent = `${Object.values(state.results).filter(result => result.score >= 80).length}/${state.selected.length}`;
+    if (stats[0]) stats[0].textContent = Object.keys(state.results).length ? `${avgScore()}%` : '—';
+    if (stats[1]) stats[1].textContent = `${Object.values(state.results).filter(result => result.score >= 80).length}/${state.selected.length}`;
     state.lastActive = Date.now();
   };
   inputs.forEach((input, i) => {

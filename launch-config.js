@@ -6,6 +6,7 @@
   const audioUrl = params.get('audio') || params.get('audioUrl') || '';
   const transcriptUrl = params.get('transcript') || params.get('transcriptUrl') || '';
   const token = params.get('token') || '';
+  const teacherName = (params.get('tu_name') || '').trim();
   const segments = params.get('segments');
   const urlScope = segments === 'full' ? 'all' : ['5', '10', '15'].includes(segments) ? segments : null;
   const minWordsParam = params.get('min_words');
@@ -15,7 +16,7 @@
   const requestedMode = params.get('mode') || '';
   const validMode = ['dev', 'real'].includes(requestedMode);
   const missingRequired = isIntegration
-    ? [['audio', audioUrl], ['transcript', transcriptUrl], ['token', token], ['mode', requestedMode]]
+    ? [['audio', audioUrl], ['transcript', transcriptUrl], ['token', token], ['mode', requestedMode], ['tu_name', teacherName]]
       .filter(([, value]) => !value.trim()).map(([name]) => name)
     : [];
   const invalidParameters = isIntegration && requestedMode.trim() && !validMode ? ['mode'] : [];
@@ -27,6 +28,7 @@
     audioUrl,
     transcriptUrl,
     token,
+    teacherName,
     segments,
     urlScope,
     scope: urlScope || '10',

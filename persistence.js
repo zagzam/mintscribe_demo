@@ -55,6 +55,7 @@
     const missingMode = launch.isIntegration && !['dev','real'].includes(mode);
     window.MintScribeLaunch = Object.freeze({
       ...launch, scope: progress.scope || launch.scope || '10',
+      teacherName: entryLaunch.isIntegration ? entryLaunch.teacherName : (launch.teacherName || ''),
       mode, environment: mode === 'dev' ? 'development' : mode === 'real' ? 'production' : null,
       status: missingMode ? 'incomplete' : launch.status,
       missingRequired: Object.freeze([...new Set([...(launch.missingRequired || []),...(missingMode ? ['mode'] : [])])]),
@@ -185,9 +186,7 @@
     if (!progress || !database) return writeChain.catch(() => {});
     return enqueueWrite(() => writeCurrentProgress(progress)).catch(error => {
       console.error('[MintScribe][03/store] 진행 기록 저장 실패', {errorType: error.name});
-      storageWarning(state.lang === 'ko'
-        ? '연습 기록을 브라우저에 저장하지 못했습니다. 저장 공간을 확인해 주세요.'
-        : 'Could not save practice progress. Check browser storage space.');
+      storageWarning(('연습 기록을 브라우저에 저장하지 못했습니다. 저장 공간을 확인해 주세요.'));
     });
   }
 
@@ -205,13 +204,13 @@
   }
 
   function resumeMarkup(progress, source) {
-    const korean = state.lang === 'ko';
+
     const finished = Object.keys(progress.results || {}).length;
     const total = progress.selectedIds?.length || 0;
-    const name = esc(source.textName || (korean ? '이전 수업' : 'Previous class'));
-    return `<section class="resume-card" aria-label="${korean ? '저장된 연습' : 'Saved practice'}">
-      <div class="resume-copy"><small>${korean ? '자동 저장된 최근 연습' : 'Last autosaved practice'}</small><strong>${name}</strong><span>${korean ? `확인한 구간 ${finished}/${total} · 집중 시간 ${mmss(progress.seconds || 0)}` : `${finished}/${total} checked · Active time ${mmss(progress.seconds || 0)}`}</span></div>
-      <div class="resume-actions"><button type="button" class="resume-button" data-action="resumePractice">${korean ? '이어서 하기' : 'Resume'} →</button><button type="button" class="resume-clear" data-action="clearPractice">${korean ? '기록 삭제' : 'Delete saved practice'}</button></div>
+    const name = esc(source.textName || (('이전 수업')));
+    return `<section class="resume-card" aria-label="${('저장된 연습')}">
+      <div class="resume-copy"><small>${('자동 저장된 최근 연습')}</small><strong>${name}</strong><span>${(`확인한 구간 ${finished}/${total} · 집중 시간 ${mmss(progress.seconds || 0)}`)}</span></div>
+      <div class="resume-actions"><button type="button" class="resume-button" data-action="resumePractice">${('이어서 하기')} →</button><button type="button" class="resume-clear" data-action="clearPractice">${('기록 삭제')}</button></div>
     </section>`;
   }
 
@@ -237,8 +236,8 @@
     const player = document.querySelector('.listen-surface .player');
     if (!player) return;
     player.querySelectorAll('button,input').forEach(control => { control.disabled = true; });
-    const korean = state.lang === 'ko';
-    player.insertAdjacentHTML('afterend', `<div class="missing-audio"><span>${korean ? '받아쓰기 기록은 복구됐어요. 음원 파일을 다시 선택하면 이어서 들을 수 있습니다.' : 'Your transcription is restored. Select the recording again to continue listening.'}</span><button type="button" class="secondary-btn" data-action="chooseResumeAudio">${korean ? '음원 다시 선택' : 'Choose recording'}</button><input id="resumeAudioInput" type="file" accept=".m4a,.mp3,audio/*" hidden></div>`);
+
+    player.insertAdjacentHTML('afterend', `<div class="missing-audio"><span>${('받아쓰기 기록은 복구됐어요. 음원 파일을 다시 선택하면 이어서 들을 수 있습니다.')}</span><button type="button" class="secondary-btn" data-action="chooseResumeAudio">${('음원 다시 선택')}</button><input id="resumeAudioInput" type="file" accept=".m4a,.mp3,audio/*" hidden></div>`);
   }
 
   renderPractice = function () {
@@ -249,9 +248,7 @@
   async function beginNewPractice(start, kind, scope) {
     await ready;
     if (state.loadingUrls || replacingSource) return;
-    if (savedProgress && !confirm(state.lang === 'ko'
-      ? '새 연습을 시작하면 저장된 이전 연습이 교체됩니다. 계속할까요?'
-      : 'Starting a new practice will replace your saved practice. Continue?')) return;
+    if (savedProgress && !confirm(('새 연습을 시작하면 저장된 이전 연습이 교체됩니다. 계속할까요?'))) return;
     replacingSource = true;
     const previousPracticeScope = state.practiceScope;
     let started = false;
@@ -283,9 +280,7 @@
         source.audioFile = null;
         source.audioMissing = true;
         await enqueueWrite(() => writeRecords([['source', source], ['progress', progress]]));
-        storageWarning(state.lang === 'ko'
-          ? '음원 저장 공간이 부족합니다. 받아쓰기는 저장되지만, 다음에 이어할 때 음원을 다시 선택해야 합니다.'
-          : 'The recording could not be saved. Your transcription is saved, but you will need to select the recording again.');
+        storageWarning(('음원 저장 공간이 부족합니다. 받아쓰기는 저장되지만, 다음에 이어할 때 음원을 다시 선택해야 합니다.'));
       }
       activeSourceId = sourceId;
       superseded = false;
@@ -301,9 +296,7 @@
       });
     } catch (error) {
       console.error('[MintScribe][03/store] 새 연습 저장 실패', {errorType: error.name});
-      storageWarning(state.lang === 'ko'
-        ? '이 연습은 자동 저장되지 않습니다. 브라우저 저장 공간을 확인해 주세요.'
-        : 'This practice is not being autosaved. Check browser storage space.');
+      storageWarning(('이 연습은 자동 저장되지 않습니다. 브라우저 저장 공간을 확인해 주세요.'));
     } finally {
       if (!started) state.practiceScope = previousPracticeScope;
       replacingSource = false;
@@ -318,9 +311,7 @@
     const source = savedSource, progress = savedProgress;
     if (superseded || !canResume(source) || (storedSourceId() && storedSourceId() !== source.id)) {
       console.warn('[MintScribe][03/store] 현재 링크와 다른 연습의 복원을 차단했습니다.');
-      state.error = state.lang === 'ko'
-        ? '현재 수업과 저장된 연습 정보가 다릅니다. 현재 수업을 새로 시작해 주세요.'
-        : 'The saved practice does not match this class. Start this class again.';
+      state.error = ('현재 수업과 저장된 연습 정보가 다릅니다. 현재 수업을 새로 시작해 주세요.');
       renderHome();
       return;
     }
@@ -381,9 +372,7 @@
       console.warn('[MintScribe][03/store] 다른 창에서 변경된 연습의 삭제를 차단했습니다.');
       return;
     }
-    if (!confirm(state.lang === 'ko'
-      ? '저장된 받아쓰기, 점수, 힌트와 음원을 모두 삭제할까요? 되돌릴 수 없습니다.'
-      : 'Delete the saved transcription, scores, hints, and recording? This cannot be undone.')) return;
+    if (!confirm(('저장된 받아쓰기, 점수, 힌트와 음원을 모두 삭제할까요? 되돌릴 수 없습니다.'))) return;
     await ready;
     clearTimeout(writeTimer);
     pendingProgress = null;
@@ -418,7 +407,7 @@
   async function chooseMissingAudio(file) {
     if (!file || !savedSource) return;
     if (file.name !== savedSource.audioName || file.size !== savedSource.audioSize) {
-      alert(state.lang === 'ko' ? '이전에 사용한 음원 파일을 선택해 주세요.' : 'Select the recording used for this practice.');
+      alert(('이전에 사용한 음원 파일을 선택해 주세요.'));
       return;
     }
     state.audioFile = file;
@@ -429,9 +418,7 @@
     enqueueWrite(() => writeRecords([['source', savedSource]])).catch(() => {
       savedSource.audioFile = null;
       savedSource.audioMissing = true;
-      storageWarning(state.lang === 'ko'
-        ? '음원은 이번 화면에서 재생할 수 있지만 브라우저에는 저장되지 않았습니다.'
-        : 'The recording will play now but could not be saved in this browser.');
+      storageWarning(('음원은 이번 화면에서 재생할 수 있지만 브라우저에는 저장되지 않았습니다.'));
     });
     renderPractice();
   }
@@ -439,9 +426,7 @@
   document.addEventListener('click', event => {
     const action = event.target.closest('[data-action]')?.dataset.action;
     if (action === 'home' && (state.view === 'practice' || state.view === 'summary')) lastSessionView = state.view;
-    if (action === 'restart' && !confirm(state.lang === 'ko'
-      ? '현재 수업의 받아쓰기, 점수, 힌트와 시간을 지우고 처음부터 다시 연습할까요?'
-      : 'Clear this class’s transcription, scores, hints, and time to practice again?')) {
+    if (action === 'restart' && !confirm(('현재 수업의 받아쓰기, 점수, 힌트와 시간을 지우고 처음부터 다시 연습할까요?'))) {
       event.stopImmediatePropagation();
       event.preventDefault();
     }
@@ -450,7 +435,7 @@
   app.addEventListener('click', event => {
     const action = event.target.closest('[data-action]')?.dataset.action;
     if (action === 'resumePractice') { restorePractice(); return; }
-    if (action === 'clearPractice') { deleteSavedPractice().catch(() => storageWarning(state.lang === 'ko' ? '기록을 삭제하지 못했습니다.' : 'Could not delete saved practice.')); return; }
+    if (action === 'clearPractice') { deleteSavedPractice().catch(() => storageWarning(('기록을 삭제하지 못했습니다.'))); return; }
     if (action === 'chooseResumeAudio') { document.getElementById('resumeAudioInput')?.click(); return; }
     if (action && action !== 'start' && action !== 'urlLoad' && action !== 'theme') saveProgress();
   });
@@ -479,9 +464,7 @@
     clearTimeout(writeTimer);
     pendingProgress = null;
     console.warn('[MintScribe][03/store] 다른 창의 새 연습을 보호하기 위해 이 창의 자동 저장을 중지했습니다.');
-    storageWarning(state.lang === 'ko'
-      ? '다른 창에서 연습 기록이 변경되었습니다. 이 창의 내용은 더 이상 자동 저장되지 않습니다. 최신 수업 링크를 다시 열어 주세요.'
-      : 'Practice changed in another tab. This tab is no longer autosaving. Reopen the latest class link.');
+    storageWarning(('다른 창에서 연습 기록이 변경되었습니다. 이 창의 내용은 더 이상 자동 저장되지 않습니다. 최신 수업 링크를 다시 열어 주세요.'));
     showResumeCard();
   });
   setInterval(() => { if (activeSourceId && state.view === 'practice') saveProgress(); }, 5000);
@@ -506,9 +489,7 @@
       });
       if (savedProgress && state.view === 'home') showResumeCard();
     } catch (_) {
-      storageWarning(state.lang === 'ko'
-        ? '브라우저 저장 기능을 사용할 수 없어 연습 기록이 자동 저장되지 않습니다.'
-        : 'Browser storage is unavailable, so practice progress will not be saved.');
+      storageWarning(('브라우저 저장 기능을 사용할 수 없어 연습 기록이 자동 저장되지 않습니다.'));
     }
   })();
 })();

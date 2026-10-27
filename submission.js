@@ -14,28 +14,28 @@
   };
 
   function message(code) {
-    const ko = state.lang === 'ko';
+
     const messages = {
-      NOT_LINKED: ko ? '민트 홈페이지에서 수업을 열어 주세요.' : 'Open this class from the Mint website.',
-      MISSING_TOKEN: ko ? '수업 연결 정보가 부족합니다. 민트 홈페이지에서 수업을 다시 열어 주세요.' : 'Class link information is missing. Reopen this class from the Mint website.',
-      INVALID_MODE: ko ? '접속 환경이 올바르지 않습니다. mode=dev 또는 mode=real이 포함된 수업 링크를 민트 홈페이지에서 다시 열어 주세요.' : 'The environment is invalid. Reopen a class link with mode=dev or mode=real from the Mint website.',
-      INCOMPLETE_PRACTICE: ko ? '모든 구간을 확인한 뒤 등록할 내용을 확인해 주세요.' : 'Check every caption before preparing registration.',
-      PREPARATION_FAILED: ko ? '등록할 내용을 준비하지 못했습니다. 다시 시도해 주세요.' : 'Could not prepare the registration content. Please try again.',
-      PENDING: ko ? '민트 홈페이지에 등록하고 있습니다. 잠시 기다려 주세요.' : 'Registering on Mint. Please wait.',
-      RETURN_GUIDANCE: ko ? '등록이 완료되었습니다. 자동으로 이동하지 않으면 아래 버튼으로 민트 홈페이지에 돌아가 주세요.' : 'Registration is complete. If you are not redirected, use the button to return to Mint.',
-      SUCCESS: ko ? '게시글이 등록되었습니다.' : 'Your article has been registered.',
-      SESSION_CHANGED: ko ? '다른 창에서 연습 기록이 변경되었습니다. 최신 수업 링크를 다시 열어 주세요.' : 'Practice changed in another tab. Reopen the latest class link.',
-      NETWORK_ERROR: ko ? '서버 응답을 받지 못했습니다. 민트 홈페이지에서 게시글 등록 여부를 확인해 주세요.' : 'No server response was received. Check on the Mint website whether the article was registered.',
-      TIMEOUT: ko ? '등록 응답 시간이 초과되었습니다. 민트 홈페이지에서 게시글 등록 여부를 확인해 주세요.' : 'The registration request timed out. Check on the Mint website whether the article was registered.',
-      INVALID_RESPONSE: ko ? '서버 응답을 해석하지 못했습니다. 민트 홈페이지에서 게시글 등록 여부를 확인해 주세요.' : 'The server response could not be read. Check on the Mint website whether the article was registered.',
-      REQUEST_INTERRUPTED: ko ? '이전 등록 요청의 결과를 확인하지 못했습니다. 민트 홈페이지에서 게시글 등록 여부를 확인해 주세요.' : 'The previous registration result is unknown. Check on the Mint website whether the article was registered.',
-      REGISTRATION_FAILED: ko ? '등록에 실패했습니다.' : 'Registration failed.',
-      AUTH_GUIDANCE: ko ? '이 연결 정보로는 다시 등록할 수 없습니다. 작성 내용은 유지됩니다. 민트 홈페이지에서 수업을 다시 열어 주세요.' : 'This class link cannot register again. Your work is preserved. Reopen the class from the Mint website.',
-      DUPLICATE_GUIDANCE: ko ? '이미 작성한 수업이므로 다시 제출하지 않습니다. 민트 홈페이지에서 등록된 게시글을 확인해 주세요.' : 'This class already has an article, so it will not be submitted again. Check the existing article on Mint.',
-      INPUT_GUIDANCE: ko ? '전달된 입력 정보를 확인해 주세요. 필요하면 민트 홈페이지에서 수업을 다시 열어 주세요. 작성 내용과 익명 선택은 유지됩니다.' : 'Check the input information. Reopen the class from Mint if needed. Your work and anonymous selection are preserved.',
-      SERVER_GUIDANCE: ko ? '작성 내용과 익명 선택은 유지됩니다. 잠시 후 다시 등록하기를 눌러 주세요.' : 'Your work and anonymous selection are preserved. Try registration again shortly.',
-      DETAIL_GUIDANCE: ko ? '서버 안내를 확인해 주세요. 원인이 해결된 뒤 직접 다시 시도할 수 있습니다. 작성 내용과 익명 선택은 유지됩니다.' : 'Follow the server message and retry manually after resolving the issue. Your work and anonymous selection are preserved.',
-      UNKNOWN_GUIDANCE: ko ? '등록 여부가 아직 확실하지 않습니다. 민트 홈페이지에서 게시글이 없는 것을 확인한 경우에만 다시 제출해 주세요.' : 'Registration is not confirmed. Only resubmit after checking on Mint that no article was registered.'
+      NOT_LINKED: ('민트 홈페이지에서 수업을 열어 주세요.'),
+      MISSING_TOKEN: ('수업 연결 정보가 부족합니다. 민트 홈페이지에서 수업을 다시 열어 주세요.'),
+      INVALID_MODE: ('접속 환경이 올바르지 않습니다. mode=dev 또는 mode=real이 포함된 수업 링크를 민트 홈페이지에서 다시 열어 주세요.'),
+      INCOMPLETE_PRACTICE: ('모든 구간을 확인한 뒤 등록할 내용을 확인해 주세요.'),
+      PREPARATION_FAILED: ('등록할 내용을 준비하지 못했습니다. 다시 시도해 주세요.'),
+      PENDING: ('민트 홈페이지에 등록하고 있습니다. 잠시 기다려 주세요.'),
+      RETURN_GUIDANCE: ('등록이 완료되었습니다. 자동으로 이동하지 않으면 아래 버튼으로 민트 홈페이지에 돌아가 주세요.'),
+      SUCCESS: ('게시글이 등록되었습니다.'),
+      SESSION_CHANGED: ('다른 창에서 연습 기록이 변경되었습니다. 최신 수업 링크를 다시 열어 주세요.'),
+      NETWORK_ERROR: ('서버 응답을 받지 못했습니다. 민트 홈페이지에서 게시글 등록 여부를 확인해 주세요.'),
+      TIMEOUT: ('등록 응답 시간이 초과되었습니다. 민트 홈페이지에서 게시글 등록 여부를 확인해 주세요.'),
+      INVALID_RESPONSE: ('서버 응답을 해석하지 못했습니다. 민트 홈페이지에서 게시글 등록 여부를 확인해 주세요.'),
+      REQUEST_INTERRUPTED: ('이전 등록 요청의 결과를 확인하지 못했습니다. 민트 홈페이지에서 게시글 등록 여부를 확인해 주세요.'),
+      REGISTRATION_FAILED: ('등록에 실패했습니다.'),
+      AUTH_GUIDANCE: ('이 연결 정보로는 다시 등록할 수 없습니다. 작성 내용은 유지됩니다. 민트 홈페이지에서 수업을 다시 열어 주세요.'),
+      DUPLICATE_GUIDANCE: ('이미 작성한 수업이므로 다시 제출하지 않습니다. 민트 홈페이지에서 등록된 게시글을 확인해 주세요.'),
+      INPUT_GUIDANCE: ('전달된 입력 정보를 확인해 주세요. 필요하면 민트 홈페이지에서 수업을 다시 열어 주세요. 작성 내용과 익명 선택은 유지됩니다.'),
+      SERVER_GUIDANCE: ('작성 내용과 익명 선택은 유지됩니다. 잠시 후 다시 등록하기를 눌러 주세요.'),
+      DETAIL_GUIDANCE: ('서버 안내를 확인해 주세요. 원인이 해결된 뒤 직접 다시 시도할 수 있습니다. 작성 내용과 익명 선택은 유지됩니다.'),
+      UNKNOWN_GUIDANCE: ('등록 여부가 아직 확실하지 않습니다. 민트 홈페이지에서 게시글이 없는 것을 확인한 경우에만 다시 제출해 주세요.')
     };
     return messages[code] || messages.PREPARATION_FAILED;
   }
@@ -136,29 +136,29 @@
 
   function buttonText() {
     const status = registration().status;
-    const ko = state.lang === 'ko';
-    if (status === 'pending') return ko ? '등록 중…' : 'Registering…';
-    if (status === 'success') return ko ? '등록 완료' : 'Registered';
-    if (status === 'error' && !errorPolicy().retry) return ko ? '등록할 수 없음' : 'Registration unavailable';
-    if (status === 'unknown') return ko ? '등록 여부 확인 후 재시도' : 'Retry after checking registration';
-    if (status === 'error') return ko ? '다시 등록하기' : 'Try registration again';
-    return ko ? '등록하기' : 'Register';
+
+    if (status === 'pending') return ('등록 중…');
+    if (status === 'success') return ('등록 완료');
+    if (status === 'error' && !errorPolicy().retry) return ('등록할 수 없음');
+    if (status === 'unknown') return ('등록 여부 확인 후 재시도');
+    if (status === 'error') return ('다시 등록하기');
+    return ('등록하기');
   }
 
   function markup() {
     if (!window.MintScribeLaunch.isIntegration) return '';
-    const ko = state.lang === 'ko';
+
     const result = registration();
     const locked = result.status === 'pending' || result.status === 'success';
     const policy = errorPolicy(result);
     const submitLocked = locked || (result.status === 'error' && !policy.retry);
     const failed = result.status === 'error' || result.status === 'unknown';
     return `<section class="submission-card" aria-labelledby="submissionTitle">
-      <h2 id="submissionTitle">${ko ? '민트 홈페이지에 받아쓰기 등록' : 'Register your transcription on Mint'}</h2>
-      <p>${ko ? '위에 표시된 받아쓰기와 MintScribe 사용 표시 카드가 등록 본문에 포함됩니다.' : 'The transcription and MintScribe attribution card above are included in the article.'}</p>
-      <label class="submission-anonymous"><input id="nameHide" type="checkbox" ${state.nameHide === 'Y' ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-describedby="anonymousHelp"><span>${ko ? '익명으로 작성' : 'Post anonymously'}</span></label>
-      <p id="anonymousHelp" class="submission-help">${ko ? '익명 작성은 작성자 이름만 숨깁니다. 게시글 본문은 공개됩니다.' : 'Anonymous posting hides your name. The article content remains public.'}</p>
-      <div class="submission-actions"><a id="registrationHome" class="secondary-btn submission-home" href="${esc(returnUrl())}" ${policy.home ? '' : 'hidden'}>${ko ? '민트 홈페이지로 돌아가기' : 'Return to the Mint website'}</a><button type="button" class="primary-btn" data-action="submitDictation" ${submitLocked ? 'disabled' : ''}>${buttonText()}</button></div>
+      <h2 id="submissionTitle">${('민트 홈페이지에 받아쓰기 등록')}</h2>
+      <p>${('위에 표시된 받아쓰기와 MintScribe 사용 표시 카드가 등록 본문에 포함됩니다.')}</p>
+      <label class="submission-anonymous"><input id="nameHide" type="checkbox" ${state.nameHide === 'Y' ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-describedby="anonymousHelp"><span>${('익명으로 작성')}</span></label>
+      <p id="anonymousHelp" class="submission-help">${('익명 작성은 작성자 이름만 숨깁니다. 게시글 본문은 공개됩니다.')}</p>
+      <div class="submission-actions"><a id="registrationHome" class="secondary-btn submission-home" href="${esc(returnUrl())}" ${policy.home ? '' : 'hidden'}>${('민트 홈페이지로 돌아가기')}</a><button type="button" class="primary-btn" data-action="submitDictation" ${submitLocked ? 'disabled' : ''}>${buttonText()}</button></div>
       <div id="submissionStatus" class="submission-status ${failed ? 'error' : ''}" role="${failed ? 'alert' : 'status'}" aria-live="polite">${esc(statusText())}</div>
       <p id="registrationGuidance" class="submission-guidance">${policy.guidance ? esc(message(policy.guidance)) : ''}</p>
     </section>`;
@@ -223,9 +223,7 @@
       syncUI();
       return;
     }
-    if (registration().status === 'unknown' && !confirm(state.lang === 'ko'
-      ? '민트 홈페이지에서 게시글이 등록되지 않은 것을 확인하셨나요? 확인한 경우에만 다시 제출해 주세요.'
-      : 'Have you checked on Mint that the article was not registered? Only resubmit after checking.')) return;
+    if (registration().status === 'unknown' && !confirm(('민트 홈페이지에서 게시글이 등록되지 않은 것을 확인하셨나요? 확인한 경우에만 다시 제출해 주세요.'))) return;
 
     let payload;
     try { payload = buildPayload(); }
