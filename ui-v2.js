@@ -307,6 +307,43 @@ function wordInputsMarkup(c) {
   }).join('')}</div>`;
 }
 
+// Hint interactions update only their UI; never replace the active media element.
+function refreshPracticeMetrics() {
+  const progress = $('.session-progress b'), fill = $('.session-progress .progress-fill');
+  if (progress) progress.textContent = `${progressPercent()}%`;
+  if (fill) fill.style.width = `${progressPercent()}%`;
+  const stats = document.querySelectorAll('.session-strip .strip-stat b');
+  if (stats[0]) stats[0].textContent = Object.keys(state.results).length ? `${avgScore()}%` : '—';
+  if (stats[1]) stats[1].textContent = `${Object.values(state.results).filter(result => result.score >= 80).length}/${state.selected.length}`;
+}
+
+function refreshPracticeTools({refreshWords = false} = {}) {
+  const c = current();
+  if (state.view !== 'practice' || !c) return;
+  const panel = state.panel === 'review' ? 'review' : 'hint';
+  const content = $('.tool-content');
+  if (content) content.innerHTML = panel === 'review' ? reviewMarkup(c, state.results[c.id]) : hintMarkup(c);
+  for (const tab of document.querySelectorAll('.tool-tabs [data-action="panel"]')) {
+    const selected = tab.dataset.panel === panel;
+    tab.classList.toggle('active', selected);
+    tab.setAttribute('aria-selected', String(selected));
+  }
+  $('.workbench')?.classList.toggle('compact-tool-open', Boolean(state.compactToolOpen));
+  if (refreshWords) {
+    const entry = $('#wordEntry');
+    if (entry) {
+      entry.outerHTML = wordInputsMarkup(c);
+      bindWordInputs(c);
+    }
+    const answer = $('#answer');
+    if (answer) answer.value = state.answers[c.id] || '';
+  }
+  if (!state.results[c.id]) document.querySelector('[data-panel="review"] i')?.remove();
+  if (!state.practiceNotice) $('#practiceNotice')?.remove();
+  refreshPracticeMetrics();
+  scheduleFloatingPlayer();
+}
+
 function renderPractice() {
   state.view = 'practice';
   state.playing = false;
@@ -528,12 +565,7 @@ function bindWordInputs(c) {
     if (state.panel === 'hint') { const content = $('.tool-content'); if (content) content.innerHTML = hintMarkup(c); }
     if (state.panel === 'review') { const content = $('.tool-content'); if (content) content.innerHTML = reviewMarkup(c, null); }
     document.querySelector('[data-panel="review"] i')?.remove();
-    const progress = $('.session-progress b'), fill = $('.session-progress .progress-fill');
-    if (progress) progress.textContent = `${progressPercent()}%`;
-    if (fill) fill.style.width = `${progressPercent()}%`;
-    const stats = document.querySelectorAll('.session-strip .strip-stat b');
-    if (stats[0]) stats[0].textContent = Object.keys(state.results).length ? `${avgScore()}%` : '—';
-    if (stats[1]) stats[1].textContent = `${Object.values(state.results).filter(result => result.score >= 80).length}/${state.selected.length}`;
+    refreshPracticeMetrics();
 
   };
   inputs.forEach((input, i) => {
@@ -593,12 +625,12 @@ app.addEventListener('click', event => {
   if (action === 'copySummary') { copySummaryHtml(); }
   if (action === 'restartAudio') { restartCueAudio(); }
   if (action === 'loadTab') { state.loadTab = button.dataset.tab; state.error = ''; renderHome(); }
-  if (action === 'panel') { state.panel = button.dataset.panel === 'review' ? 'review' : 'hint'; state.compactToolOpen = true; renderPractice(); }
-  if (action === 'toolClose') { state.compactToolOpen = false; renderPractice(); }
+  if (action === 'panel') { state.panel = button.dataset.panel === 'review' ? 'review' : 'hint'; state.compactToolOpen = true; refreshPracticeTools(); }
+  if (action === 'toolClose') { state.compactToolOpen = false; refreshPracticeTools(); }
   if (action === 'prev' && state.index > 0) { stopAudio(); state.index--; renderPractice(); }
-  if (action === 'hintPrev' && state.hintIndex > 0) { state.hintIndex--; renderPractice(); }
-  if (action === 'hintNext' && state.hintIndex < wordTokens(current().text).length - 1) { state.hintIndex++; renderPractice(); }
-  if (action === 'hintSelect') { state.hintIndex = Number(button.dataset.index); renderPractice(); }
+  if (action === 'hintPrev' && state.hintIndex > 0) { state.hintIndex--; refreshPracticeTools(); }
+  if (action === 'hintNext' && state.hintIndex < wordTokens(current().text).length - 1) { state.hintIndex++; refreshPracticeTools(); }
+  if (action === 'hintSelect') { state.hintIndex = Number(button.dataset.index); refreshPracticeTools(); }
   if (action === 'reveal') {
     const c = current(), h = hintState(c), i = state.hintIndex;
     if (state.hintUsed < hintAllowance() && !wordIsCorrect(c, i) && (h.levels[i] || 0) < 2) {
@@ -611,7 +643,7 @@ app.addEventListener('click', event => {
         state.answers[c.id] = typed.join(' ').trim();
         invalidateCueCheck(c, 'word_revealed');
       }
-      renderPractice();
+      refreshPracticeTools({refreshWords:h.levels[i] === 2});
     }
   }
 });
