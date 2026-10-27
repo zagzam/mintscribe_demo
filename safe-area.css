@@ -44,3 +44,31 @@ html .storage-warning {
     padding-top: calc(5px + var(--mint-safe-top));
   }
 }
+
+/* Some mobile app wrappers overlay the status bar but report a zero inset.
+   Keep a conservative touch-screen guard; use larger system insets when given. */
+@media (max-width: 760px) and (pointer: coarse), (max-height: 700px) and (pointer: coarse) {
+  :root { --mint-safe-top: max(32px, env(safe-area-inset-top, 0px)); }
+}
+
+/* Sticky children can leave their top offset at the end of their parent.
+   Mask that scrolling content under the system status area in both themes. */
+html::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--mint-safe-top);
+  background: #f7f7f7;
+  z-index: 50;
+}
+html[data-theme="dark"]::before { background: #202020; }
+@media (max-width: 760px), (max-height: 700px) {
+  html .practice-page .listen-surface .player {
+    top: calc(var(--mint-safe-top) + 8px);
+  }
+}
+html.keyboard-open .practice-page .listen-surface .player {
+  top: calc(var(--mint-safe-top) + 8px);
+}
