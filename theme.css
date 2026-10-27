@@ -130,5 +130,5 @@ html .cue-bar .section-title {
   font-weight:700;
   color:var(--ink);
 }
-html .cue-bar .section-title span { font-weight:400; color:var(--muted); }
+html .cue-bar .section-title span { font-size:.75em; font-weight:400; color:var(--muted); }
 html .summary-compact { grid-template-columns:repeat(2,minmax(0,1fr)); }
