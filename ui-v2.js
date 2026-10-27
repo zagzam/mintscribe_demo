@@ -9,9 +9,12 @@ state.lastResultKey = null;
 state.wordAnswers = {};
 state.hintUsed = 0;
 state.practiceScope = state.scope;
+state.reviewPending = null;
 
 const baseResetSession = resetSession;
 resetSession = function () {
+  document.querySelector('#cueReviewDialog')?.remove();
+  state.reviewPending = null;
   baseResetSession();
   state.panel = 'hint';
   state.hintIndex = 0;
@@ -105,9 +108,9 @@ function cueAnswerSignature(c) {
 
 function cueIsComplete(c) {
   const result = state.results[c.id];
-  // Old checkpoints have no signature; keep their nonempty checked answers usable.
-  return Boolean(result && cueHasAnswer(c)
-    && (result.checkedAnswer === undefined || result.checkedAnswer === cueAnswerSignature(c)));
+  if (!result || (result.checkedAnswer !== undefined && result.checkedAnswer !== cueAnswerSignature(c))) return false;
+  // Preserve nonempty checks from older checkpoints. New checks require continuation.
+  return result.continued === true || (result.continued === undefined && cueHasAnswer(c));
 }
 
 function isPracticeComplete() {
@@ -130,37 +133,94 @@ function practiceNoticeMarkup() {
   const notice = state.practiceNotice;
   if (!notice || notice.cueId !== current()?.id) return '';
 
-  const message = notice.code === 'EMPTY_ANSWER'
-    ? (('한 단어 이상 입력하거나 AI 단어를 공개한 뒤 확인하기를 눌러 주세요.'))
-    : ((`아직 확인하지 않은 구간이 ${notice.remaining}개 있습니다. ${state.index + 1}번 구간부터 확인해 주세요. 오답이나 일부 빈칸이 있어도 괜찮습니다.`));
+  const message = `아직 진행하지 않은 구간이 ${notice.remaining}개 있습니다. ${state.index + 1}번 구간에서 다음 자막을 눌러 주세요.`;
   return `<div id="practiceNotice" class="notice error" role="alert" tabindex="-1">${esc(message)}</div>`;
 }
 
-checkAnswer = function () {
-  const c = current(), words = wordTokens(c.text), typed = state.wordAnswers[c.id] || [];
-  const answer = words.map((word, i) => wordIsRevealed(c, i) ? word : (typed[i] || '').trim()).join(' ').trim();
-  if (!cueHasAnswer(c)) {
-    invalidateCueCheck(c, 'empty_answer');
-    state.practiceNotice = {code:'EMPTY_ANSWER',cueId:c.id};
-    console.warn('[MintScribe][04/completion] 빈 구간은 완료할 수 없습니다.', {caption:state.index + 1});
-    stopAudio();
-    renderPractice();
-    $('#practiceNotice')?.focus();
-    return;
+function assessCue(c) {
+  const words = wordTokens(c.text), typed = state.wordAnswers[c.id] || [];
+  const correct = words.filter((_, i) => wordIsCorrect(c, i)).length;
+  const missing = words.filter((_, i) => !wordIsRevealed(c, i) && !String(typed[i] || '').trim()).length;
+  const hinted = words.filter((_, i) => wordIsRevealed(c, i)).length;
+  state.answers[c.id] = words.map((word, i) => wordIsRevealed(c, i) ? word : String(typed[i] || '').trim()).join(' ').trim();
+  return {score:Math.round(correct / Math.max(1, words.length) * 100),correct,missing,hinted,total:words.length,
+    checkedAnswer:cueAnswerSignature(c),continued:false};
+}
+
+function saveReviewProgress() {
+  window.MintScribePracticeStore?.checkpoint();
+}
+
+function advanceReviewedCue() {
+  if (state.index >= state.selected.length - 1) renderSummary();
+  else { state.index++; renderPractice(); }
+}
+
+function closeCueReview(continuePractice) {
+  const pending = state.reviewPending;
+  if (!pending) return;
+  const c = current(), result = state.results[c?.id];
+  const valid = c?.id === pending.cueId && result === pending.result && result.checkedAnswer === cueAnswerSignature(c);
+  state.reviewPending = null;
+  const dialog = document.querySelector('#cueReviewDialog');
+  dialog?.close(); dialog?.remove();
+  if (!valid) return;
+  if (continuePractice) {
+    result.continued = true;
+    console.info('[MintScribe][04/completion] 결과 확인 후 계속 진행', {section:state.index + 1,score:result.score,missing:result.missing});
+    advanceReviewedCue();
+    saveReviewProgress();
+  } else {
+    state.panel = 'hint';
+    refreshPracticeTools();
+    saveReviewProgress();
+    $('[data-action="next"]')?.focus({preventScroll:true});
   }
+}
+
+function openCueReview(c, result) {
+  const dialog = document.createElement('dialog');
+  dialog.id = 'cueReviewDialog';
+  dialog.className = 'cue-review-dialog';
+  dialog.setAttribute('aria-labelledby','cueReviewTitle');
+  const title = result.missing ? `미입력 단어가 ${result.missing}개 있어요` : 'AI 자막과 비교해 보세요';
+  const help = result.missing ? '다시 풀거나, 미입력 단어의 정답을 확인하고 계속 진행할 수 있어요.' : '오답과 AI 힌트로 공개한 단어를 확인한 뒤 계속 진행해 주세요.';
+  dialog.innerHTML = `<div class="cue-review-scroll"><div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><h2 id="cueReviewTitle">${title}</h2><p>${help}</p></div></div>${resultLegendMarkup()}<div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p></div>${answerComparisonMarkup(c)}<p class="tool-note">${t('reviewCaveat')}</p></div><div class="cue-review-actions"><button type="button" class="secondary-btn" data-action="retryCue">다시 풀기</button><button type="button" class="primary-btn" data-action="continueCue">${state.index === state.selected.length - 1 ? '결과 요약 보기' : '계속'}</button></div>`;
+  state.reviewPending = {cueId:c.id,result};
+  dialog.addEventListener('cancel', event => { event.preventDefault(); closeCueReview(false); });
+  document.body.appendChild(dialog);
+  dialog.showModal();
+}
+
+nextCue = function () {
+  if (state.reviewPending) return;
+  const c = current();
+  if (!c) return;
+  stopAudio();
   state.practiceNotice = null;
   state.error = '';
-  state.answers[c.id] = answer;
-  const answerTokens = words.flatMap((_, i) => wordIsRevealed(c, i)
-    ? [`\u0000revealed-${i}`] : tokensNorm(typed[i] || ''));
-  state.results[c.id] = {score: similarityTokens(tokensNorm(c.text), answerTokens),checkedAnswer:cueAnswerSignature(c)};
-  console.info('[MintScribe][04/completion] 구간 확인 완료', {
-    caption:state.index + 1,score:state.results[c.id].score,
-    completed:state.selected.filter(cueIsComplete).length,total:state.selected.length
+  const result = assessCue(c);
+  state.results[c.id] = result;
+  refreshPracticeTools();
+  console.info('[MintScribe][04/completion] 다음 구간 이동 전 자동 확인', {
+    section:state.index + 1,score:result.score,missing:result.missing,hinted:result.hinted,total:result.total
   });
-  stopAudio();
-  renderPractice();
+  if (result.correct === result.total && result.total > 0) {
+    result.continued = true;
+    advanceReviewedCue();
+    saveReviewProgress();
+  } else {
+    saveReviewProgress();
+    openCueReview(c, result);
+  }
 };
+
+// Dialog buttons live outside the app shell; native modal focus traps the background.
+document.addEventListener('click', event => {
+  const action = event.target.closest('#cueReviewDialog [data-action]')?.dataset.action;
+  if (action === 'continueCue') closeCueReview(true);
+  if (action === 'retryCue') closeCueReview(false);
+});
 
 function hintAllowance() {
   return state.practiceScope === 'all' ? Infinity : state.selected.length * 5;
@@ -182,63 +242,46 @@ function hintMarkup(c) {
     <p class="tool-note">✧ ${('파란색은 직접 맞힌 단어, 회색은 AI 자막에서 보여 준 글자예요. 흰색은 아직 맞히지 못한 단어예요.')} ${t('aiNotice')}</p>`;
 }
 
-function reviewMarkup(c, result) {
-  if (!result) return `<div class="empty-panel"><span>◎</span><b>${('받아쓰기를 확인하면 결과가 여기에 표시돼요.')}</b><p>${t('reviewCaveat')}</p></div>`;
-  const revealed = wordTokens(c.text).filter((_, i) => wordIsRevealed(c, i)).length;
-  return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${esc(c.text)}</p></div><p class="tool-note">✧ ${revealed ? ((`AI가 공개한 단어 ${revealed}개는 정답으로 인정하지 않았어요. `)) : ''}${t('reviewCaveat')}</p>`;
+function resultWordKind(c, i) {
+  if (wordIsRevealed(c, i)) return 'hint';
+  return wordIsCorrect(c, i) ? 'correct' : 'error';
 }
 
-
-
-
-
-function punctuatedStudentLine(c) {
+function referenceResultMarkup(c, exported = false) {
   const source = String(c.text || '');
-  const reference = [...source.matchAll(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu)];
-  const typed = state.wordAnswers[c.id] || wordTokens(state.answers[c.id] || '');
-  const output = [];
-  let pending = source.slice(0, reference[0]?.index || 0).replace(/\s/g, '');
-  reference.forEach((match, i) => {
-    const answer = wordIsRevealed(c, i) ? match[0] : (typed[i] || '').trim();
-    if (answer) {
-      const clean = wordTokens(answer).join(' ');
-      let word = clean;
-      if (match[0].length > 1 && match[0] === match[0].toLocaleUpperCase('en')) word = clean.toLocaleUpperCase('en');
-      else if (/^\p{Lu}/u.test(match[0])) word = clean.replace(/^\p{L}/u, char => char.toLocaleUpperCase('en'));
-      else word = clean.replace(/^\p{Lu}/u, char => char.toLocaleLowerCase('en'));
-      if (word) { output.push(pending + word); pending = ''; }
-    }
-    const end = match.index + match[0].length;
-    const next = reference[i + 1]?.index ?? source.length;
-    const marks = source.slice(end, next).replace(/\s/g, '');
-    if (marks) {
-      if (output.length) {
-        if (/^[.!?…]/u.test(marks)) output[output.length - 1] = output[output.length - 1].replace(/[,;:]$/u, '');
-        if (!output[output.length - 1].endsWith(marks)) output[output.length - 1] += marks;
-      }
-      else pending += marks;
-    }
-  });
-  return output.join(' ');
+  const matches = [...source.matchAll(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu)];
+  const colors = {correct:'#0F75D5',hint:'#242424',error:'#BA3434'};
+  let cursor = 0;
+  return matches.map((match, i) => {
+    const before = source.slice(cursor, match.index);
+    cursor = match.index + match[0].length;
+    const kind = resultWordKind(c, i);
+    const label = kind === 'correct' ? '직접 정답' : kind === 'hint' ? 'AI 힌트' : '오답 또는 미입력';
+    return `${esc(before)}<span class="result-word result-${kind}" data-result="${kind}" title="${label}"${exported ? ` style="color:${colors[kind]};"` : ''}>${esc(match[0])}</span>`;
+  }).join('') + esc(source.slice(cursor));
+}
+
+function resultLegendMarkup(exported = false) {
+  return `<div class="result-legend"${exported ? ' style="font:400 12px/1.7 Pretendard,Arial,sans-serif;margin:10px 0;color:#777777;"' : ''}><span class="result-correct"${exported ? ' style="color:#0F75D5;"' : ''}>파란색 · 직접 정답</span> / <span class="result-hint"${exported ? ' style="color:#242424;"' : ''}>기본색 · AI 힌트</span> / <span class="result-error"${exported ? ' style="color:#BA3434;"' : ''}>붉은색 · 오답·미입력</span></div>`;
+}
+
+function answerComparisonMarkup(c, exported = false) {
+  const typed = state.wordAnswers[c.id] || [];
+  const differences = wordTokens(c.text).flatMap((word, i) => resultWordKind(c, i) === 'error'
+    ? [`<li>${i + 1}번 · ${esc(String(typed[i] || '').trim() || '(미입력)')} → <span${exported ? ' style="color:#BA3434;"' : ' class="result-error"'}>${esc(word)}</span></li>`] : []);
+  if (!differences.length) return '';
+  return `<details class="answer-comparison"${exported ? ' style="color:#555555;font:400 13px/1.7 Pretendard,Arial,sans-serif;margin-top:8px;"' : ''}><summary>내 입력과 AI 원문 비교 (${differences.length})</summary><ul>${differences.join('')}</ul></details>`;
+}
+
+function reviewMarkup(c, result) {
+  if (!result) return `<div class="empty-panel"><span>◎</span><b>다음 자막을 누르면 결과가 여기에 표시돼요.</b><p>${t('reviewCaveat')}</p></div>`;
+  const hinted = wordTokens(c.text).filter((_, i) => wordIsRevealed(c, i)).length;
+  return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div>${resultLegendMarkup()}<div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p></div>${answerComparisonMarkup(c)}<p class="tool-note">${hinted ? `AI가 공개한 단어 ${hinted}개는 정답으로 인정하지 않았어요. ` : ''}${t('reviewCaveat')}</p>`;
 }
 
 function summaryExportMarkup() {
-  const title = ('나의 수업 받아쓰기');
-  const lines = state.selected.map((c, i) => {
-    const sentence = punctuatedStudentLine(c);
-    return `<p style="display:flex;gap:14px;align-items:baseline;margin:0;padding:13px 0;border-bottom:1px solid #E1E1E1;color:#242424;font:500 16px/1.7 Pretendard,Arial,sans-serif;"><span style="flex:none;color:#777777;font:700 11px/1.7 Pretendard,Arial,sans-serif;">${String(i + 1).padStart(2, '0')}</span><span>${sentence ? esc(sentence) : `<em style="color:#999999;">${('미작성')}</em>`}</span></p>`;
-  }).join('');
-  return `<section style="background:#ffffff;border:1px solid #E1E1E1;border-radius:8px;padding:clamp(20px,3vw,34px);">
-    <div style="color:#0F91FF;font:700 11px/1.4 Pretendard,Arial,sans-serif;letter-spacing:1.5px;">MINTSCRIBE 2.0 · TRANSCRIPT</div>
-    <h2 style="color:#242424;font:700 26px/1.35 Pretendard,Arial,sans-serif;margin:7px 0 4px;">${title}</h2>
-    <p style="color:#777777;font:400 12px/1.6 Pretendard,Arial,sans-serif;margin:0 0 14px;">${('직접 받아쓴 문장 · 구두점과 대문자는 AI 자막을 참고해 정리했어요.')}</p>
-    <div>${lines}</div>
-  </section>
-  <aside style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;background:#ffffff;border:1px solid #E1E1E1;border-radius:8px;padding:17px 19px;margin-top:14px;font-family:Pretendard,Arial,sans-serif;color:#242424;">
-    <div style="width:44px;height:44px;flex:none;display:grid;place-items:center;background:#0F91FF;border-radius:8px;color:#ffffff;font-size:24px;">✦</div>
-    <div style="flex:1;min-width:160px;"><div style="font-size:10px;font-weight:700;color:#777777;letter-spacing:1px;">수업을 다시 듣는 새로운 방법</div><div style="font-size:15px;font-weight:700;margin:3px 0;color:#242424;">MintScribe 2.0 (베타)으로 받아썼어요</div><div style="font-size:12px;line-height:1.5;color:#777777;">듣고, 쓰고, 내 것으로 만드는 수업 복습</div></div>
-    <a href="https://zagzam.github.io/mintscribe_demo/" target="_blank" rel="noopener noreferrer" style="display:inline-block;flex:none;background:#0F91FF;border-radius:8px;padding:9px 12px;color:#ffffff;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;">MintScribe 2.0 (베타) 써보기 ↗</a>
-  </aside>`;
+  const lines = state.selected.map((c, i) => `<div style="margin:0;padding:13px 0;border-bottom:1px solid #E1E1E1;"><div style="display:flex;gap:14px;align-items:baseline;color:#242424;font:500 16px/1.7 Pretendard,Arial,sans-serif;"><span style="flex:none;color:#777777;font:700 11px/1.7 Pretendard,Arial,sans-serif;">${String(i + 1).padStart(2, '0')}</span><span>${referenceResultMarkup(c, true)}</span></div>${answerComparisonMarkup(c, true)}</div>`).join('');
+  return `<section style="background:#ffffff;border:1px solid #E1E1E1;border-radius:8px;padding:clamp(20px,3vw,34px);"><div style="color:#0F91FF;font:700 11px/1.4 Pretendard,Arial,sans-serif;letter-spacing:1.5px;">MINTSCRIBE 2.0 · TRANSCRIPT</div><h2 style="color:#242424;font:700 26px/1.35 Pretendard,Arial,sans-serif;margin:7px 0 4px;">나의 수업 받아쓰기</h2><p style="color:#777777;font:400 12px/1.6 Pretendard,Arial,sans-serif;margin:0 0 10px;">AI 자막 전체 문장에 학습 결과를 표시했어요. 붉은 단어는 다시 확인해 보세요.</p>${resultLegendMarkup(true)}<div>${lines}</div></section>`;
 }
 
 function renderSummary() {
@@ -260,13 +303,13 @@ function renderSummary() {
   state.practiceNotice = null;
   console.info('[MintScribe][04/completion] 모든 구간 확인 완료, 요약 진입', {total:state.selected.length});
   state.view = 'summary';
-  const done = Object.keys(state.results).length;
+  const done = state.selected.filter(cueIsComplete).length;
   const rows = state.selected.map((c, i) => `<div class="summary-row"><span>${String(i + 1).padStart(2, '0')} · ${mmss(c.start)}</span><span>${state.results[c.id] ? state.results[c.id].score + '%' : '—'}</span></div>`).join('');
-  shell(`<main class="page summary summary-v2"><header class="summary-v2-head"><div><div class="eyebrow">MINTSCRIBE 2.0 / REVIEW</div><h1>${('내가 받아쓴 수업')}</h1><p>${('선생님의 말에서 직접 받아쓴 내용을 한눈에 확인하세요.')}</p></div><button class="summary-copy-btn" data-action="copySummary" aria-label="${('받아쓰기 HTML 복사')}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>${('HTML 복사')}</span></button></header>
+  shell(`<main class="page summary summary-v2"><header class="summary-v2-head"><div><div class="eyebrow">MINTSCRIBE 2.0 / REVIEW</div><h1>${('내가 받아쓴 수업')}</h1><p>${('AI 자막의 정답 문장과 나의 학습 결과를 함께 확인하세요.')}</p></div><button class="summary-copy-btn" data-action="copySummary" aria-label="${('받아쓰기 HTML 복사')}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>${('HTML 복사')}</span></button></header>
     <div id="copyStatus" class="copy-status" role="status" aria-live="polite"></div>
     <div id="exportView" class="summary-export">${summaryExportMarkup()}</div>
     <div class="summary-compact"><div><small>${t('completed')}</small><b>${done} / ${state.selected.length}</b></div><div><small>${t('avg')}</small><b>${done ? avgScore() + '%' : '—'}</b></div></div>
-    <details class="summary-details"><summary>${('문장별 점수 보기')}</summary><div class="summary-list">${rows}</div></details>
+    <details class="summary-details"><summary>${('구간별 점수 보기')}</summary><div class="summary-list">${rows}</div></details>
     ${window.MintScribeSubmission.markup()}
     <div class="summary-v2-actions"><button class="secondary-btn" data-action="returnPractice">← ${('연습으로 돌아가기')}</button>${window.MintScribeLaunch.isIntegration ? '' : `<button class="secondary-btn" data-action="home">${t('newFiles')}</button>`}<button class="primary-btn" data-action="restart">${t('restart')} →</button></div>
     <p class="footnote">${t('reviewCaveat')}</p>
@@ -278,7 +321,7 @@ async function copySummaryHtml() {
   const view = $('#exportView');
   if (!view) return;
   const html = view.innerHTML;
-  const plain = state.selected.map((c, i) => `${i + 1}. ${punctuatedStudentLine(c) || (('미작성'))}`).join('\n') + '\n\nMintScribe 2.0 · https://zagzam.github.io/mintscribe_demo/';
+  const plain = view.innerText;
   let copied = false;
   try {
     if (navigator.clipboard?.write && window.ClipboardItem) {
@@ -293,7 +336,7 @@ async function copySummaryHtml() {
     selection.removeAllRanges();
   }
   const status = $('#copyStatus');
-  status.textContent = copied ? (('받아쓰기와 MintScribe 카드가 복사됐어요.')) : (('복사하지 못했어요. 다시 시도해 주세요.'));
+  status.textContent = copied ? (('학습 결과가 복사됐어요.')) : (('복사하지 못했어요. 다시 시도해 주세요.'));
 }
 
 function wordInputsMarkup(c) {
@@ -314,7 +357,7 @@ function refreshPracticeMetrics() {
   if (fill) fill.style.width = `${progressPercent()}%`;
   const stats = document.querySelectorAll('.session-strip .strip-stat b');
   if (stats[0]) stats[0].textContent = Object.keys(state.results).length ? `${avgScore()}%` : '—';
-  if (stats[1]) stats[1].textContent = `${Object.values(state.results).filter(result => result.score >= 80).length}/${state.selected.length}`;
+  if (stats[1]) stats[1].textContent = `${state.selected.filter(c => cueIsComplete(c) && state.results[c.id].score >= 80).length}/${state.selected.length}`;
 }
 
 function refreshPracticeTools({refreshWords = false} = {}) {
@@ -356,15 +399,15 @@ function renderPractice() {
   const pct = progressPercent(), panel = state.panel === 'review' ? 'review' : 'hint';
   shell(`<main class="page practice-page">
     <div class="practice-head"><h1 class="lesson-teacher">${esc((window.MintScribeLaunch.teacherName || '').trim() || '무명')} 강사님 수업</h1>${window.MintScribeLaunch.isIntegration ? '' : `<div class="head-buttons"><button class="ghost-btn" data-action="home">← <span>${t('back')}</span></button></div>`}</div>
-    <div class="session-strip"><div class="session-progress"><span>전체 진행도 <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.results).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>통과구간</small><b>${Object.values(state.results).filter(x => x.score >= 80).length}/${state.selected.length}</b></div></div>
+    <div class="session-strip"><div class="session-progress"><span>전체 진행도 <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.results).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>통과구간</small><b>${state.selected.filter(c => cueIsComplete(c) && state.results[c.id].score >= 80).length}/${state.selected.length}</b></div></div>
     ${practiceNoticeMarkup()}
-    <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><h2 class="section-title">구간 <b>${String(state.index + 1).padStart(2, '0')}</b><span>/${String(state.selected.length).padStart(2, '0')}</span></h2></div><div class="cue-navigation"><select id="cueJump" aria-label="${t('items')}">${state.selected.map((x, i) => `<option value="${i}" ${i === state.index ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${mmss(x.start)}</option>`).join('')}</select></div></div>
+    <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><h2 class="section-title">구간 <b>${String(state.index + 1).padStart(2, '0')}</b><span>/${String(state.selected.length).padStart(2, '0')}</span></h2></div></div>
       <div class="cue-time">${mmss(c.start)} — ${mmss(c.end)} <span>·</span> ${duration(c)} <span>·</span> ${wordTokens(c.text).length} ${t('words')}</div>
       <div class="player-anchor"><div class="player"><button class="play-button" data-action="play" ${state.sample ? 'disabled' : ''} aria-label="${t('play')}">▶</button><button class="restart-button" data-action="restartAudio" ${state.sample ? 'disabled' : ''} aria-label="${('처음부터 재생')}" title="${('처음부터 재생')}">⏮</button><input class="seek-bar" id="seekBar" type="range" min="${c.start}" max="${c.end}" step="0.01" value="${c.start}" style="--seek-pct:0%" aria-label="${('재생 위치')}" aria-valuetext="${mmss(c.start)}" ${state.sample ? 'disabled' : ''}><div class="player-time" id="playerTime">${mmss(c.start)} / ${mmss(c.end)}</div></div></div>
       <div class="play-options"><button class="pill-btn ${state.loop ? 'active' : ''}" data-action="loop" aria-pressed="${state.loop}">↺ ${t('loop')}</button><select id="speed" class="speed-select" aria-label="${t('slow')}"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option></select></div>
       ${state.sample ? `<div class="sample-note">${t('sampleNoAudio')}</div>` : ''}
       <div class="write-label"><span>${t('write')}</span><small>${('단어 아래 글자 수를 보고 입력하세요')}</small></div>${wordInputsMarkup(c)}<textarea id="answer" class="hidden" tabindex="-1" aria-hidden="true">${esc(state.answers[c.id] || '')}</textarea>
-      <div class="write-actions"><div class="caption-actions"><button class="secondary-btn" data-action="prev" ${state.index === 0 ? 'disabled' : ''}>← ${('이전 자막')}</button><button class="secondary-btn" data-action="check">${t('check')}</button><button class="primary-btn" data-action="next">${state.index === state.selected.length - 1 ? t('finish') : t('next')} →</button></div><span class="ai-caution">✦ AI STT ${('기준')}</span></div>
+      <div class="write-actions"><div class="caption-actions"><button class="secondary-btn" data-action="prev" ${state.index === 0 ? 'disabled' : ''}>← ${('이전 자막')}</button><button class="primary-btn" data-action="next">${state.index === state.selected.length - 1 ? t('finish') : t('next')} →</button></div><span class="ai-caution">✦ AI STT ${('기준')}</span></div>
     </section><section class="insight-surface"><div class="tool-tabs" role="tablist" aria-label="연습 도구"><button class="compact-write-tab" role="tab" data-action="toolClose">✎ ${('받아쓰기')}</button><button role="tab" data-action="panel" data-panel="hint" aria-selected="${panel === 'hint'}" class="${panel === 'hint' ? 'active' : ''}">✧ ${('힌트')}</button><button role="tab" data-action="panel" data-panel="review" aria-selected="${panel === 'review'}" class="${panel === 'review' ? 'active' : ''}">◎ ${('확인')}${result ? '<i></i>' : ''}</button></div><div class="tool-content">${panel === 'review' ? reviewMarkup(c, result) : hintMarkup(c)}</div></section></div>
     <audio id="sourceAudio" src="${esc(state.audioUrl || '')}" preload="metadata"></audio>
   </main>`);
@@ -373,7 +416,6 @@ function renderPractice() {
   bindAudioDiagnostics();
   bindWordInputs(c);
   scheduleFloatingPlayer();
-  $('#cueJump').addEventListener('change', event => { stopAudio(); state.index = Number(event.target.value); renderPractice(); });
 }
 
 // Keep the existing controls visible across both the writing and tools sections.

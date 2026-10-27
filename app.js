@@ -193,12 +193,12 @@ function stopAudio(){const audio=$('#sourceAudio');audio?.pause();state.playing=
 function tokensNorm(x){return wordTokens(x.toLocaleLowerCase('en')).map(w=>w.replace(/[’']/g,"'"))}
 function similarityTokens(x,y){const dp=Array.from({length:y.length+1},(_,i)=>i);for(let i=1;i<=x.length;i++){let prev=dp[0];dp[0]=i;for(let j=1;j<=y.length;j++){const old=dp[j];dp[j]=Math.min(dp[j]+1,dp[j-1]+1,prev+(x[i-1]===y[j-1]?0:1));prev=old}}return Math.round(Math.max(0,1-dp[y.length]/Math.max(x.length,y.length,1))*100)}
 function similarity(a,b){return similarityTokens(tokensNorm(a),tokensNorm(b))}
-function checkAnswer(){const c=current(),val=$('#answer').value;if(!val.trim()){state.error=t('incomplete');$('#answer').focus();return}state.answers[c.id]=val;state.results[c.id]={score:similarity(c.text,val)};stopAudio();renderPractice()}
-function nextCue(){stopAudio();state.hintOpen=false;if(state.index>=state.selected.length-1)renderSummary();else{state.index++;renderPractice()}}
+
+var nextCue;
 
 
 var renderSummary;
-app.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(!el)return;const a=el.dataset.action;switch(a){case'audioPick':$('#audioInput').click();break;case'textPick':$('#textInput').click();break;case'sample':startSample();break;case'urlLoad':startUrls();break;case'start':startLocal($('#scope').value);break;case'home':stopAudio();renderHome();break;case'summary':renderSummary();break;case'restart':resetSession();renderPractice();break;case'play':playCue();break;case'loop':state.loop=!state.loop;el.classList.toggle('active',state.loop);el.setAttribute('aria-pressed',state.loop);break;case'hint':state.hintOpen=!state.hintOpen;renderPractice();break;case'word':{const h=hintState(current()),i=Number(el.dataset.index);if(h.uses<6&&(h.levels[i]||0)<3){h.levels[i]=(h.levels[i]||0)+1;h.uses++;renderPractice()}break}case'check':checkAnswer();break;case'next':nextCue();break;case'jump':stopAudio();state.index=Number(el.dataset.index);state.hintOpen=false;renderPractice();break;}});
+app.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(!el)return;const a=el.dataset.action;switch(a){case'audioPick':$('#audioInput').click();break;case'textPick':$('#textInput').click();break;case'sample':startSample();break;case'urlLoad':startUrls();break;case'start':startLocal($('#scope').value);break;case'home':stopAudio();renderHome();break;case'summary':renderSummary();break;case'restart':resetSession();renderPractice();break;case'play':playCue();break;case'loop':state.loop=!state.loop;el.classList.toggle('active',state.loop);el.setAttribute('aria-pressed',state.loop);break;case'hint':state.hintOpen=!state.hintOpen;renderPractice();break;case'word':{const h=hintState(current()),i=Number(el.dataset.index);if(h.uses<6&&(h.levels[i]||0)<3){h.levels[i]=(h.levels[i]||0)+1;h.uses++;renderPractice()}break}case'next':nextCue();break;}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAudio()});
 
 const launchConfig=window.MintScribeLaunch;

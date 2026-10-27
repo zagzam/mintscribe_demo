@@ -155,7 +155,7 @@
     const failed = result.status === 'error' || result.status === 'unknown';
     return `<section class="submission-card" aria-labelledby="submissionTitle">
       <h2 id="submissionTitle">${('민트 홈페이지에 받아쓰기 등록')}</h2>
-      <p>${('위에 표시된 받아쓰기와 MintScribe 사용 표시 카드가 등록 본문에 포함됩니다.')}</p>
+      <p>${('위에 표시된 정답 문장과 단어별 학습 결과가 등록 본문에 포함됩니다.')}</p>
       <label class="submission-anonymous"><input id="nameHide" type="checkbox" ${state.nameHide === 'Y' ? 'checked' : ''} ${locked ? 'disabled' : ''} aria-describedby="anonymousHelp"><span>${('익명으로 작성')}</span></label>
       <p id="anonymousHelp" class="submission-help">${('익명 작성은 작성자 이름만 숨깁니다. 게시글 본문은 공개됩니다.')}</p>
       <div class="submission-actions"><a id="registrationHome" class="secondary-btn submission-home" href="${esc(returnUrl())}" ${policy.home ? '' : 'hidden'}>${('민트 홈페이지로 돌아가기')}</a><button type="button" class="primary-btn" data-action="submitDictation" ${submitLocked ? 'disabled' : ''}>${buttonText()}</button></div>

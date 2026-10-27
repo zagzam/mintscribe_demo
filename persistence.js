@@ -205,7 +205,7 @@
 
   function resumeMarkup(progress, source) {
 
-    const finished = Object.keys(progress.results || {}).length;
+    const finished = (progress.selectedIds || []).filter(id => progress.results?.[id] && progress.results[id].continued !== false).length;
     const total = progress.selectedIds?.length || 0;
     const name = esc(source.textName || (('이전 수업')));
     return `<section class="resume-card" aria-label="${('저장된 연습')}">
@@ -426,7 +426,7 @@
   document.addEventListener('click', event => {
     const action = event.target.closest('[data-action]')?.dataset.action;
     if (action === 'home' && (state.view === 'practice' || state.view === 'summary')) lastSessionView = state.view;
-    if (action === 'restart' && !confirm(('현재 수업의 받아쓰기, 점수, 힌트와 시간을 지우고 처음부터 다시 연습할까요?'))) {
+    if (action === 'restart' && !confirm(('현재 수업의 받아쓰기, 점수와 힌트를 지우고 처음부터 다시 연습할까요?'))) {
       event.stopImmediatePropagation();
       event.preventDefault();
     }
@@ -444,7 +444,7 @@
     if (event.target.matches('.word-input, #answer')) saveProgress();
   });
   app.addEventListener('change', event => {
-    if (event.target.id === 'cueJump' || event.target.id === 'speed' || event.target.id === 'nameHide') saveProgress();
+    if (event.target.id === 'speed' || event.target.id === 'nameHide') saveProgress();
     if (event.target.id === 'resumeAudioInput') chooseMissingAudio(event.target.files?.[0]);
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { saveProgress(); flushProgress(); } });

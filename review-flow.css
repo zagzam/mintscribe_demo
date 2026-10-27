@@ -1,0 +1,55 @@
+/* Shared assessment colors. Exported HTML uses inline colors on its white card. */
+.result-correct { color:#0f75d5; }
+.result-hint { color:var(--ink); }
+.result-error { color:#ba3434; }
+html[data-theme="dark"] .result-correct { color:#7dc5ff; }
+html[data-theme="dark"] .result-error { color:#ff9a9a; }
+.result-legend { font-size:12px; line-height:1.8; margin:10px 0; }
+.result-legend span { display:inline-block; }
+.answer-comparison { margin:12px 0; font-size:13px; line-height:1.7; overflow-wrap:anywhere; }
+.answer-comparison summary { cursor:pointer; color:var(--muted); }
+.answer-comparison ul { margin:8px 0; padding-left:22px; }
+html .practice-page .write-actions .caption-actions {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  width:100%;
+}
+.cue-review-dialog {
+  position:fixed;
+  width:min(620px,calc(100vw - 32px));
+  max-width:none;
+  max-height:calc(100dvh - var(--mint-safe-top) - var(--mint-safe-bottom) - 32px);
+  margin:auto;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:var(--white);
+  color:var(--ink);
+  box-shadow:0 18px 70px #0004;
+}
+.cue-review-dialog[open] { display:flex; flex-direction:column; }
+.cue-review-dialog::backdrop { background:#0007; }
+.cue-review-scroll { padding:24px; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+.cue-review-dialog .review-head { gap:18px; margin:0 0 16px; }
+.cue-review-dialog .review-ring { flex:none; }
+.cue-review-dialog h2 { margin:0 0 8px; font-size:20px; line-height:1.4; }
+.cue-review-dialog .review-head p { margin:0; font-size:14px; line-height:1.7; color:var(--muted); }
+.cue-review-dialog .review-reference { padding:16px; }
+.cue-review-dialog .review-reference p { font-size:16px; line-height:1.8; }
+.cue-review-actions { flex:none; display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:16px 24px; border-top:1px solid var(--line); }
+.cue-review-actions button { min-height:46px; font-size:15px; }
+html:has(#cueReviewDialog[open]) { overflow:hidden; }
+@media(max-width:760px) {
+  .cue-review-dialog { inset:auto 0 0; margin:0; width:100%; max-height:calc(100dvh - var(--mint-safe-top) - 12px); border-radius:20px 20px 0 0; }
+  .cue-review-scroll { padding:20px; }
+  .cue-review-dialog h2 { font-size:18px; }
+  .cue-review-actions { padding:14px 20px calc(14px + var(--mint-safe-bottom)); }
+}
+
+/* The existing reference heading rule targets spans; words need body typography. */
+html .review-reference .result-word { font:inherit; letter-spacing:normal; }
+html .review-reference .result-word.result-correct { color:#0f75d5; }
+html .review-reference .result-word.result-hint { color:var(--ink); }
+html .review-reference .result-word.result-error { color:#ba3434; }
+html[data-theme="dark"] .review-reference .result-word.result-correct { color:#7dc5ff; }
+html[data-theme="dark"] .review-reference .result-word.result-error { color:#ff9a9a; }
