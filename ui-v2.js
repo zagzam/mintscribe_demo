@@ -209,7 +209,13 @@ function showEntryToast(message) {
   toast.id = 'entryToast';
   toast.className = 'entry-toast';
   toast.setAttribute('role', 'alert');
-  toast.textContent = message;
+  const icon = document.createElement('span');
+  icon.className = 'entry-toast-icon';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = '!';
+  const text = document.createElement('span');
+  text.textContent = message;
+  toast.append(icon, text);
   document.body.appendChild(toast);
   entryToastTimer = setTimeout(clearEntryToast, 4000);
 }
