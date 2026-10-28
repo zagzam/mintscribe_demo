@@ -112,9 +112,14 @@ function cueAnswerSignature(c) {
   }));
 }
 
+function cueHintSignature(c) {
+  return JSON.stringify(wordTokens(c.text).map((_, i) => state.hints[c.id]?.levels?.[i] || 0));
+}
+
 function cueIsComplete(c) {
   const result = state.results[c.id];
   if (!result || (result.checkedAnswer !== undefined && result.checkedAnswer !== cueAnswerSignature(c))) return false;
+  if (result.checkedHints !== undefined && result.checkedHints !== cueHintSignature(c)) return false;
   if (result.progressionRule === 'minimum10' && !cueCanContinue(result)) return false;
   // Preserve nonempty checks from older checkpoints. New checks require continuation.
   return result.continued === true || (result.continued === undefined && cueHasAnswer(c));
@@ -151,7 +156,7 @@ function assessCue(c) {
   const hinted = words.filter((_, i) => wordIsRevealed(c, i)).length;
   state.answers[c.id] = words.map((word, i) => wordIsRevealed(c, i) ? word : String(typed[i] || '').trim()).join(' ').trim();
   return {score:Math.round(correct / Math.max(1, words.length) * 100),correct,missing,hinted,total:words.length,
-    checkedAnswer:cueAnswerSignature(c),continued:false};
+    checkedAnswer:cueAnswerSignature(c),checkedHints:cueHintSignature(c),continued:false};
 }
 
 // First checks are independent of editable/current results and are never overwritten.
@@ -232,7 +237,8 @@ function closeCueReview(continuePractice) {
   const pending = state.reviewPending;
   if (!pending) return;
   const c = current(), result = state.results[c?.id];
-  const valid = c?.id === pending.cueId && result === pending.result && result.checkedAnswer === cueAnswerSignature(c);
+  const valid = c?.id === pending.cueId && result === pending.result && result.checkedAnswer === cueAnswerSignature(c)
+    && (result.checkedHints === undefined || result.checkedHints === cueHintSignature(c));
   if (valid && continuePractice && !cueCanContinue(result)) {
     console.warn('[MintScribe][04/completion] 최소 일치율 미달로 이동 차단', {section:state.index + 1,score:result.score});
     return;
@@ -301,6 +307,16 @@ nextCue = function () {
   if (state.reviewPending) return;
   const c = current();
   if (!c) return;
+  if (cueIsComplete(c)) {
+    clearEntryToast();
+    stopAudio();
+    state.practiceNotice = null;
+    state.error = '';
+    console.info('[MintScribe][05/revisit] 변경 없는 완료 구간, 재확인 없이 이동', {section:state.index + 1});
+    advanceReviewedCue();
+    saveReviewProgress();
+    return;
+  }
   const entry = cueEntryStatus(c);
   const blocked = !entry.played ? 'AUDIO_NOT_PLAYED' : entry.filled < entry.required ? 'INPUT_BELOW_30_PERCENT' : null;
   console.info('[MintScribe][04/entry]', {section:state.index + 1,...entry,allowed:!blocked,reason:blocked});
@@ -837,8 +853,8 @@ app.addEventListener('click', event => {
         const typed = state.wordAnswers[c.id] || (state.wordAnswers[c.id] = []);
         typed[i] = wordTokens(c.text)[i];
         state.answers[c.id] = typed.join(' ').trim();
-        invalidateCueCheck(c, 'word_revealed');
       }
+      invalidateCueCheck(c, h.levels[i] === 2 ? 'word_revealed' : 'first_letter_revealed');
       refreshPracticeTools({refreshWords:h.levels[i] === 2});
     }
   }
