@@ -218,6 +218,15 @@ document.addEventListener('click', event => {
   if (action === 'retryCue') closeCueReview(false);
 });
 
+// Derive paid usage from reveals so older checkpoints regain free first-letter hints.
+function syncFullWordHintUsage() {
+  state.hintUsed = Object.values(state.hints).reduce((total, hint) => {
+    hint.uses = Object.values(hint.levels || {}).filter(level => level >= 2).length;
+    return total + hint.uses;
+  }, 0);
+  return state.hintUsed;
+}
+
 function hintAllowance() {
   return state.practiceScope === 'all' ? Infinity : state.selected.length * 5;
 }
@@ -227,14 +236,15 @@ function hintMarkup(c) {
   state.hintIndex = Math.min(Math.max(0, state.hintIndex || 0), Math.max(0, words.length - 1));
   const i = state.hintIndex, word = words[i] || '', level = h.levels[i] || 0;
   const allowance = hintAllowance();
-  const correct = wordIsCorrect(c, i), remaining = Math.max(0, allowance - state.hintUsed);
+  const correct = wordIsCorrect(c, i), remaining = Math.max(0, allowance - syncFullWordHintUsage());
   const remainingLabel = Number.isFinite(allowance) ? remaining : '∞';
-  const allowanceLabel = Number.isFinite(allowance) ? allowance : '∞';
   const visible = correct ? esc((state.wordAnswers[c.id] || [])[i]) : level === 0 ? '＿'.repeat(Math.min(word.length, 14)) : level === 1 ? `<span class="system-letter">${esc(word[0])}</span>${'＿'.repeat(Math.min(word.length - 1, 13))}` : `<span class="system-letter">${esc(word)}</span>`;
-  const nextHint = word.length === 1 || level > 0 ? (('단어 전체 보기')) : (('첫 글자 보기'));
-  return `<div class="tool-intro"><span class="tool-kicker">${('막힌 단어를 선택하세요')}</span><strong>${('남은 세션 힌트')} <em>${remainingLabel}</em> / ${allowanceLabel}</strong></div>
+  const isFullReveal = word.length === 1 || level > 0;
+  const nextHint = isFullReveal ? '단어 전체 보기 · 1회 차감' : '첫 글자 보기';
+  const exhausted = isFullReveal && !remaining;
+  return `<div class="tool-intro"><span class="tool-kicker">${('막힌 단어를 선택하세요')}</span><strong>단어 전체 보기 <em>${remainingLabel}회 남음</em></strong></div>
     <div class="hint-word-list" aria-label="${('단어별 힌트')}">${words.map((w, n) => { const done = wordIsCorrect(c, n), reveal = h.levels[n] || 0; const label = done ? `✓ ${esc((state.wordAnswers[c.id] || [])[n])}` : reveal === 2 ? esc(w) : reveal === 1 ? `${esc(w[0])}${'·'.repeat(Math.min(w.length - 1, 10))}` : `${w.length} ${('글자')}`; return `<button data-action="hintSelect" data-index="${n}" class="hint-word ${n === i ? 'current' : ''} ${done ? 'correct' : reveal ? 'system-shown' : ''}" aria-label="${n + 1}: ${w.length} ${('글자')}"><small>${n + 1}</small><b>${label}</b></button>`; }).join('')}</div>
-    <div class="hint-focus"><div><small>${(`${i + 1}번 단어 · ${word.length}글자`)}</small><div class="hint-focus-word ${correct ? 'correct' : ''}">${visible}</div></div><button class="reveal-btn" data-action="reveal" ${correct || level >= 2 || !remaining ? 'disabled' : ''}>✦ ${correct ? (('직접 맞혔어요')) : level >= 2 ? (('단어 확인 완료')) : !remaining ? (('힌트를 모두 썼어요')) : nextHint}</button></div>
+    <div class="hint-focus"><div><small>${(`${i + 1}번 단어 · ${word.length}글자`)}</small><div class="hint-focus-word ${correct ? 'correct' : ''}">${visible}</div></div><button class="reveal-btn" data-action="reveal" ${correct || level >= 2 || exhausted ? 'disabled' : ''}>✦ ${correct ? (('직접 맞혔어요')) : level >= 2 ? (('단어 확인 완료')) : exhausted ? (('힌트를 모두 썼어요')) : nextHint}</button></div>
     <p class="tool-note">✧ ${('파란색은 직접 맞힌 단어, 회색은 AI 자막에서 보여 준 글자예요. 흰색은 아직 맞히지 못한 단어예요.')} ${t('aiNotice')}</p>`;
 }
 
@@ -685,10 +695,17 @@ app.addEventListener('click', event => {
   if (action === 'hintSelect') { state.hintIndex = Number(button.dataset.index); refreshPracticeTools(); }
   if (action === 'reveal') {
     const c = current(), h = hintState(c), i = state.hintIndex;
-    if (state.hintUsed < hintAllowance() && !wordIsCorrect(c, i) && (h.levels[i] || 0) < 2) {
-      h.levels[i] = wordTokens(c.text)[i]?.length === 1 ? 2 : (h.levels[i] || 0) + 1;
-      h.uses++;
-      state.hintUsed++;
+    const level = h.levels[i] || 0;
+    const nextLevel = wordTokens(c.text)[i]?.length === 1 ? 2 : level + 1;
+    const paid = nextLevel === 2;
+    if ((!paid || syncFullWordHintUsage() < hintAllowance()) && !wordIsCorrect(c, i) && level < 2) {
+      h.levels[i] = nextLevel;
+      syncFullWordHintUsage();
+      console.info('[MintScribe][hint] 힌트 공개', {
+        section:state.index + 1,word:i + 1,type:paid ? 'whole_word' : 'first_letter',
+        charged:paid ? 1 : 0,used:state.hintUsed,
+        remaining:Number.isFinite(hintAllowance()) ? hintAllowance() - state.hintUsed : 'unlimited'
+      });
       if (h.levels[i] === 2) {
         const typed = state.wordAnswers[c.id] || (state.wordAnswers[c.id] = []);
         typed[i] = wordTokens(c.text)[i];

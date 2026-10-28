@@ -339,7 +339,7 @@
     state.wordAnswers = progress.wordAnswers || {};
     state.results = progress.results || {};
     state.hints = progress.hints || {};
-    state.hintUsed = progress.hintUsed || 0;
+    syncFullWordHintUsage();
 
 
     state.scope = progress.scope || '10';
