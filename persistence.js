@@ -169,7 +169,7 @@
       version: 2, sourceId, savedAt: Date.now(), view: view === 'summary' && complete ? 'summary' : 'practice',
       selectedIds: state.selected.map(cue => cue.id), index: state.index,
       answers: state.answers, wordAnswers: state.wordAnswers, results: state.results,
-      hints: state.hints, hintUsed: state.hintUsed,
+      hints: state.hints, hintUsed: state.hintUsed, playedCues: state.playedCues,
       scope: state.practiceScope || state.scope,
       panel: state.panel, hintIndex: state.hintIndex,
       loop: state.loop, playbackRate: state.playbackRate || 1,
@@ -339,6 +339,7 @@
     state.wordAnswers = progress.wordAnswers || {};
     state.results = progress.results || {};
     state.hints = progress.hints || {};
+    state.playedCues = progress.playedCues || {};
     syncFullWordHintUsage();
 
 

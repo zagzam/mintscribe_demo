@@ -10,9 +10,12 @@ state.wordAnswers = {};
 state.hintUsed = 0;
 state.practiceScope = state.scope;
 state.reviewPending = null;
+state.playedCues = {};
 
 const baseResetSession = resetSession;
 resetSession = function () {
+  clearEntryToast();
+  state.playedCues = {};
   document.querySelector('#cueReviewDialog')?.remove();
   state.reviewPending = null;
   baseResetSession();
@@ -37,6 +40,7 @@ startUrls = function () {
 };
 
 function renderHome() {
+  clearEntryToast();
   state.view = 'home';
   const integrated = window.MintScribeLaunch.isIntegration;
   const filesSelected = Boolean(state.audioFile && state.textFile);
@@ -193,10 +197,42 @@ function openCueReview(c, result) {
   dialog.showModal();
 }
 
+let entryToastTimer;
+function clearEntryToast() {
+  clearTimeout(entryToastTimer);
+  document.querySelector('#entryToast')?.remove();
+}
+
+function showEntryToast(message) {
+  clearEntryToast();
+  const toast = document.createElement('div');
+  toast.id = 'entryToast';
+  toast.className = 'entry-toast';
+  toast.setAttribute('role', 'alert');
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  entryToastTimer = setTimeout(clearEntryToast, 4000);
+}
+
+function cueEntryStatus(c) {
+  const words = wordTokens(c.text), typed = state.wordAnswers[c.id] || [];
+  const filled = words.filter((_, i) => wordIsRevealed(c, i) || String(typed[i] || '').trim()).length;
+  return {played:state.playedCues[c.id] === true,filled,total:words.length,
+    required:Math.ceil(words.length * 0.3)};
+}
+
 nextCue = function () {
   if (state.reviewPending) return;
   const c = current();
   if (!c) return;
+  const entry = cueEntryStatus(c);
+  const blocked = !entry.played ? 'AUDIO_NOT_PLAYED' : entry.filled < entry.required ? 'INPUT_BELOW_30_PERCENT' : null;
+  console.info('[MintScribe][04/entry]', {section:state.index + 1,...entry,allowed:!blocked,reason:blocked});
+  if (blocked) {
+    showEntryToast(blocked === 'AUDIO_NOT_PLAYED' ? '음원을 듣고 빈칸을 채워주세요.' : '전체 빈칸의 30% 이상을 채워주세요.');
+    return;
+  }
+  clearEntryToast();
   stopAudio();
   state.practiceNotice = null;
   state.error = '';
@@ -359,6 +395,7 @@ function refreshPracticeTools({refreshWords = false} = {}) {
 }
 
 function renderPractice() {
+  clearEntryToast();
   state.view = 'practice';
   state.playing = false;
   const c = current();
@@ -429,11 +466,18 @@ window.visualViewport?.addEventListener('resize', scheduleFloatingPlayer, {passi
 window.visualViewport?.addEventListener('scroll', scheduleFloatingPlayer, {passive:true});
 
 function bindAudioDiagnostics() {
-  const audio = $('#sourceAudio');
+  const audio = $('#sourceAudio'), cue = current();
   audio.addEventListener('loadedmetadata', () => {
     console.info('[MintScribe][02/audio] 음원 정보 수신', {duration:audio.duration,readyState:audio.readyState});
   });
   audio.addEventListener('playing', () => {
+    // Record successful playback, not a click that can fail or be blocked.
+    if (audio.isConnected && current()?.id === cue.id && !audio.paused && audio.readyState >= 2
+      && audio.currentTime >= cue.start && audio.currentTime < cue.end && !state.playedCues[cue.id]) {
+      state.playedCues[cue.id] = true;
+      console.info('[MintScribe][04/entry] 구간 재생 이력 저장', {section:state.index + 1});
+      saveReviewProgress();
+    }
     console.info('[MintScribe][02/audio] 음원 재생', {currentTime:audio.currentTime,readyState:audio.readyState});
     document.querySelector('.audio-load-error')?.remove();
   });

@@ -46,3 +46,6 @@ html .review-reference .result-word.result-error { color:#ba3434; }
 html[data-theme="dark"] .review-reference .result-word.result-error { color:#ff9a9a; }
 
 .cue-review-actions.single-action { grid-template-columns:1fr; }
+
+/* Non-blocking feedback keeps mobile keyboard focus and the player intact. */
+.entry-toast{position:fixed;z-index:1000;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);box-sizing:border-box;width:max-content;max-width:calc(100% - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));padding:14px 20px;border-radius:14px;background:#444;color:#fff;font:600 14px/1.5 Pretendard,Arial,sans-serif;text-align:center;box-shadow:0 4px 18px #0002;pointer-events:none;}
