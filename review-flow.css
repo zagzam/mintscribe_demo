@@ -51,3 +51,5 @@ html[data-theme="dark"] .review-reference .result-word.result-error { color:#ff9
 .entry-toast{display:flex;align-items:center;gap:12px;position:fixed;z-index:1000;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);box-sizing:border-box;width:max-content;max-width:calc(100% - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));padding:14px 20px;border-radius:14px;background:#444;color:#fff;font:600 14px/1.5 Pretendard,Arial,sans-serif;text-align:center;box-shadow:0 4px 18px #0002;pointer-events:none;}
 
 .entry-toast-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#ffda24;color:#444;font:800 18px/1 Arial,sans-serif;}
+
+html .review-reference .first-result-note{margin:12px 0 0;padding:8px 10px;border-radius:6px;background:var(--surface,#f5f5f5);color:var(--muted);font:400 12px/1.6 Pretendard,Arial,sans-serif;}

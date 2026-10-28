@@ -168,7 +168,7 @@
     return {
       version: 2, sourceId, savedAt: Date.now(), view: view === 'summary' && complete ? 'summary' : 'practice',
       selectedIds: state.selected.map(cue => cue.id), index: state.index,
-      answers: state.answers, wordAnswers: state.wordAnswers, results: state.results,
+      answers: state.answers, wordAnswers: state.wordAnswers, results: state.results, firstResults: state.firstResults,
       hints: state.hints, hintUsed: state.hintUsed, playedCues: state.playedCues,
       scope: state.practiceScope || state.scope,
       panel: state.panel, hintIndex: state.hintIndex,
@@ -341,6 +341,7 @@
     state.hints = progress.hints || {};
     state.playedCues = progress.playedCues || {};
     syncFullWordHintUsage();
+    restoreFirstResults(progress.firstResults);
 
 
     state.scope = progress.scope || '10';
