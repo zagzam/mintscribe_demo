@@ -53,3 +53,9 @@ html[data-theme="dark"] .review-reference .result-word.result-error { color:#ff9
 .entry-toast-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#ffda24;color:#444;font:800 18px/1 Arial,sans-serif;}
 
 html .review-reference .first-result-note{margin:12px 0 0;padding:8px 10px;border-radius:6px;background:var(--surface,#f5f5f5);color:var(--muted);font:400 12px/1.6 Pretendard,Arial,sans-serif;}
+
+html .review-ring.review-blue{background:conic-gradient(#0f91ff var(--score),#e1e1e1 0);}
+html .review-ring.review-red{background:conic-gradient(#ff4d57 var(--score),#e1e1e1 0);}
+html[data-theme="dark"] .review-ring.review-blue{background:conic-gradient(#0f91ff var(--score),#444 0);}
+html[data-theme="dark"] .review-ring.review-red{background:conic-gradient(#ff626b var(--score),#444 0);}
+.cue-review-actions .primary-btn:disabled{opacity:.4;cursor:not-allowed;}

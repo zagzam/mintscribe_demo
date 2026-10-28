@@ -115,6 +115,7 @@ function cueAnswerSignature(c) {
 function cueIsComplete(c) {
   const result = state.results[c.id];
   if (!result || (result.checkedAnswer !== undefined && result.checkedAnswer !== cueAnswerSignature(c))) return false;
+  if (result.progressionRule === 'minimum10' && !cueCanContinue(result)) return false;
   // Preserve nonempty checks from older checkpoints. New checks require continuation.
   return result.continued === true || (result.continued === undefined && cueHasAnswer(c));
 }
@@ -196,18 +197,53 @@ function advanceReviewedCue() {
   else { state.index++; renderPractice(); }
 }
 
+function cueAllWordsLocked(result) {
+  return result.total > 0 && result.correct + result.hinted >= result.total;
+}
+
+function cueCanContinue(result) {
+  return result.score >= 10 || cueAllWordsLocked(result);
+}
+
+function cueReviewPresentation(result) {
+  const locked = cueAllWordsLocked(result), last = state.index === state.selected.length - 1;
+  const destination = last ? '결과 요약으로 넘어갈' : '다음 구간으로 진행할';
+  let title, help;
+  if (result.score === 100) {
+    title = '모두 맞혔어요! 🎉';
+    help = last ? '정확도 100%! 마지막 구간까지 멋지게 마쳤어요.' : '정확도 100%! 다음 구간도 이어서 도전해 보세요.';
+  } else if (result.score >= 50) {
+    title = '통과했어요!';
+    help = locked ? `정답을 확인한 뒤 ${destination} 수 있어요.` : `정답을 확인하고 아쉬웠던 부분을 다시 풀거나, ${destination} 수 있어요.`;
+  } else if (result.score >= 10) {
+    title = '다시 시도해 보세요.';
+    help = locked ? `모든 단어를 확인했어요. 정답을 복습한 뒤 ${destination} 수 있어요.` : `한 번 더 풀어보는 것을 권장해요. 정답을 확인한 뒤 ${destination} 수도 있어요.`;
+  } else if (locked) {
+    title = '정답을 확인했어요';
+    help = `모든 단어를 확인했어요. AI 힌트로 공개한 단어는 점수에 포함되지 않지만, ${destination} 수 있어요.`;
+  } else {
+    title = '다시 시도해 보세요.';
+    help = `정답을 확인하고 다시 풀어보세요. 일치율 10% 이상부터 ${destination} 수 있어요.`;
+  }
+  return {title,help,canRetry:!locked,canContinue:cueCanContinue(result),ringClass:result.score >= 50 ? 'review-blue' : 'review-red'};
+}
+
 function closeCueReview(continuePractice) {
   const pending = state.reviewPending;
   if (!pending) return;
   const c = current(), result = state.results[c?.id];
   const valid = c?.id === pending.cueId && result === pending.result && result.checkedAnswer === cueAnswerSignature(c);
+  if (valid && continuePractice && !cueCanContinue(result)) {
+    console.warn('[MintScribe][04/completion] 최소 일치율 미달로 이동 차단', {section:state.index + 1,score:result.score});
+    return;
+  }
   state.reviewPending = null;
   const dialog = document.querySelector('#cueReviewDialog');
   dialog?.close(); dialog?.remove();
   if (!valid) return;
   if (continuePractice) {
     result.continued = true;
-    console.info('[MintScribe][04/completion] 결과 확인 후 계속 진행', {section:state.index + 1,score:result.score,missing:result.missing});
+    console.info('[MintScribe][04/completion] 결과 확인 후 계속 진행', {section:state.index + 1,score:result.score,missing:result.missing,reason:cueAllWordsLocked(result) ? 'ALL_WORDS_LOCKED' : 'SCORE_AT_LEAST_10'});
     advanceReviewedCue();
     saveReviewProgress();
   } else {
@@ -223,10 +259,8 @@ function openCueReview(c, result) {
   dialog.id = 'cueReviewDialog';
   dialog.className = 'cue-review-dialog';
   dialog.setAttribute('aria-labelledby','cueReviewTitle');
-  const canRetry = result.correct + result.hinted < result.total;
-  const title = result.score === 100 ? '모두 맞혔어요! 🎉' : result.missing ? `미입력 단어가 ${result.missing}개 있어요` : '결과를 확인해 주세요';
-  const help = result.score === 100 ? (state.index === state.selected.length - 1 ? '정확도 100%! 마지막 구간까지 멋지게 마쳤어요.' : '정확도 100%! 다음 구간도 이어서 도전해 보세요.') : result.missing ? '다시 풀거나, 미입력 단어의 정답을 확인하고 계속 진행할 수 있어요.' : '붉은 단어를 확인한 뒤 계속 진행해 주세요.';
-  dialog.innerHTML = `<div class="cue-review-scroll"><div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><h2 id="cueReviewTitle">${title}</h2><p>${help}</p></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p>${retryNoticeMarkup(result)}</div><p class="tool-note">${t('reviewCaveat')}</p></div><div class="cue-review-actions ${canRetry ? '' : 'single-action'}">${canRetry ? '<button type="button" class="secondary-btn" data-action="retryCue">다시 풀기</button>' : ''}<button type="button" class="primary-btn" data-action="continueCue">${state.index === state.selected.length - 1 ? '결과 요약 보기' : '계속'}</button></div>`;
+  const {title,help,canRetry,canContinue,ringClass} = cueReviewPresentation(result);
+  dialog.innerHTML = `<div class="cue-review-scroll"><div class="review-head"><div class="review-ring ${ringClass}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><h2 id="cueReviewTitle">${title}</h2><p>${help}</p></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p>${retryNoticeMarkup(result)}</div><p class="tool-note">${t('reviewCaveat')}</p></div><div class="cue-review-actions ${canRetry ? '' : 'single-action'}">${canRetry ? '<button type="button" class="secondary-btn" data-action="retryCue">다시 풀기</button>' : ''}<button type="button" class="primary-btn" data-action="continueCue" ${canContinue ? '' : 'disabled'}>${state.index === state.selected.length - 1 ? '결과 요약 보기' : '계속'}</button></div>`;
   state.reviewPending = {cueId:c.id,result};
   dialog.addEventListener('cancel', event => { event.preventDefault(); closeCueReview(false); });
   document.body.appendChild(dialog);
@@ -279,13 +313,14 @@ nextCue = function () {
   state.practiceNotice = null;
   state.error = '';
   const result = assessCue(c);
+  result.progressionRule = 'minimum10';
   result.isRetry = Boolean(state.firstResults[c.id]);
   captureFirstResult(c, result);
   state.results[c.id] = result;
   refreshPracticeTools();
   console.info('[MintScribe][04/completion] 다음 구간 이동 전 자동 확인', {
     section:state.index + 1,score:result.score,firstScore:state.firstResults[c.id].score,
-    isRetry:result.isRetry,missing:result.missing,hinted:result.hinted,total:result.total
+    isRetry:result.isRetry,canContinue:cueCanContinue(result),allWordsLocked:cueAllWordsLocked(result),missing:result.missing,hinted:result.hinted,total:result.total
   });
   // Every section gets its accuracy moment, including a perfect answer.
   saveReviewProgress();
@@ -353,7 +388,8 @@ function referenceResultMarkup(c, exported = false) {
 
 function reviewMarkup(c, result) {
   if (!result) return `<div class="empty-panel"><span>◎</span><b>다음 자막을 누르면 결과가 여기에 표시돼요.</b><p>${t('reviewCaveat')}</p></div>`;
-  return `<div class="review-head"><div class="review-ring ${result.score >= 80 ? 'passed' : ''}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${result.score >= 80 ? t('passed') : t('tryAgain')}</b><small>${t('threshold')}</small></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p>${retryNoticeMarkup(result)}</div><p class="tool-note">${t('reviewCaveat')}</p>`;
+  const {title,help,ringClass} = cueReviewPresentation(result);
+  return `<div class="review-head"><div class="review-ring ${ringClass}" style="--score:${result.score}%"><strong>${result.score}<small>%</small></strong></div><div><span>${t('similarity')}</span><b>${title}</b><small>${help}</small></div></div><div class="review-reference"><span>AI TRANSCRIPT</span><p>${referenceResultMarkup(c)}</p>${retryNoticeMarkup(result)}</div><p class="tool-note">${t('reviewCaveat')}</p>`;
 }
 
 function summaryExportMarkup() {
@@ -411,7 +447,7 @@ function refreshPracticeMetrics() {
   if (fill) fill.style.width = `${progressPercent()}%`;
   const stats = document.querySelectorAll('.session-strip .strip-stat b');
   if (stats[0]) stats[0].textContent = Object.keys(state.firstResults).length ? `${avgScore()}%` : '—';
-  if (stats[1]) stats[1].textContent = `${state.selected.filter(c => cueIsComplete(c) && state.results[c.id].score >= 80).length}/${state.selected.length}`;
+  if (stats[1]) stats[1].textContent = `${state.selected.filter(cueIsComplete).length}/${state.selected.length}`;
 }
 
 function refreshPracticeTools({refreshWords = false} = {}) {
@@ -454,7 +490,7 @@ function renderPractice() {
   const pct = progressPercent(), panel = state.panel === 'review' ? 'review' : 'hint';
   shell(`<main class="page practice-page">
     <div class="practice-head"><h1 class="lesson-teacher">${esc((window.MintScribeLaunch.teacherName || '').trim() || '무명')} 강사님 수업</h1>${window.MintScribeLaunch.isIntegration ? '' : `<div class="head-buttons"><button class="ghost-btn" data-action="home">← <span>${t('back')}</span></button></div>`}</div>
-    <div class="session-strip"><div class="session-progress"><span>전체 진행도 <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.firstResults).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>통과구간</small><b>${state.selected.filter(c => cueIsComplete(c) && state.results[c.id].score >= 80).length}/${state.selected.length}</b></div></div>
+    <div class="session-strip"><div class="session-progress"><span>전체 진행도 <b>${pct}%</b></span><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="strip-stat"><small>${t('score')}</small><b>${Object.keys(state.firstResults).length ? avgScore() + '%' : '—'}</b></div><div class="strip-stat"><small>통과구간</small><b>${state.selected.filter(cueIsComplete).length}/${state.selected.length}</b></div></div>
     ${practiceNoticeMarkup()}
     <div class="workbench ${state.compactToolOpen ? 'compact-tool-open' : ''}"><section class="listen-surface"><div class="cue-bar"><div><h2 class="section-title">구간 <b>${String(state.index + 1).padStart(2, '0')}</b><span>/${String(state.selected.length).padStart(2, '0')}</span></h2></div></div>
       <div class="cue-time">${mmss(c.start)} — ${mmss(c.end)} <span>·</span> ${duration(c)} <span>·</span> ${wordTokens(c.text).length} ${t('words')}</div>
