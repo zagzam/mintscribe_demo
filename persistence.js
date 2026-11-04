@@ -28,7 +28,7 @@
       const launch = source.launch;
       return entryLaunch.status === 'ready' && source.kind === 'url'
         && launch?.isIntegration && launch.status === 'ready'
-        && launch.token === entryLaunch.token && launch.environment === entryLaunch.environment
+        && launch.environment === entryLaunch.environment
         && normalizeUrl(source.audioUrl) === normalizeUrl(entryLaunch.audioUrl)
         && normalizeUrl(source.transcriptUrl) === normalizeUrl(entryLaunch.transcriptUrl)
         && launch.urlScope === entryLaunch.urlScope && launch.minWords === entryLaunch.minWords;
@@ -55,6 +55,9 @@
     const missingMode = launch.isIntegration && !['dev','real'].includes(mode);
     window.MintScribeLaunch = Object.freeze({
       ...launch, scope: progress.scope || launch.scope || '10',
+      // Resume the same lesson with the fresh credential from the incoming link.
+      token: entryLaunch.isIntegration && entryLaunch.status === 'ready'
+        ? entryLaunch.token : (progress.launchToken || launch.token || ''),
       teacherName: entryLaunch.isIntegration ? entryLaunch.teacherName : (launch.teacherName || ''),
       mode, environment: mode === 'dev' ? 'development' : mode === 'real' ? 'production' : null,
       status: missingMode ? 'incomplete' : launch.status,
@@ -174,7 +177,8 @@
       panel: state.panel, hintIndex: state.hintIndex,
       loop: state.loop, playbackRate: state.playbackRate || 1,
       nameHide: state.nameHide === 'Y' ? 'Y' : 'N',
-      registration: state.registration || null
+      registration: state.registration || null,
+      launchToken: window.MintScribeLaunch.isIntegration ? window.MintScribeLaunch.token : ''
     };
   }
 
