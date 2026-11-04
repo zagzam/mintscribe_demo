@@ -61,7 +61,11 @@ function renderHome() {
       ${integrated ? linkedClassMarkup() : mode === 'files' ? `<div class="load-mode"><div id="drop" class="drop-zone"><div class="upload-icon">⇧</div><strong>${t('dropTitle')}</strong><p>${t('dropBody')}</p><div class="file-buttons"><button class="secondary-btn" data-action="audioPick">♪ ${t('audioFile')}</button><button class="secondary-btn" data-action="textPick">≡ ${t('transcriptFile')}</button></div></div><input id="audioInput" class="hidden" type="file" accept=".m4a,.mp3,audio/*"><input id="textInput" class="hidden" type="file" accept=".vtt,.txt,text/plain,text/vtt"><div class="file-status"><div class="file-line"><b>♪ ${esc(state.audioFile?.name || '—')}</b><span>AUDIO</span></div><div class="file-line"><b>≡ ${esc(state.textFile?.name || '—')}</b><span>TEXT</span></div></div></div>` : `<div class="load-mode url-mode"><label>${t('audioUrl')}<input class="text-input" id="audioUrl" type="url" placeholder="https://…/class.m4a" value="${esc(state.audioUrlInput || '')}"></label><label>${t('textUrl')}<input class="text-input" id="textUrl" type="url" placeholder="https://…/class.vtt" value="${esc(state.textUrlInput || '')}"></label><p class="helper">${t('cors')}</p></div>`}
       <div class="load-bottom"><div><label class="scope-label" for="scope">${t('choosePractice')}</label>${scopeSelect()}</div><button class="primary-btn" data-action="${mode === 'files' ? 'start' : 'urlLoad'}" ${state.loadingUrls || linkError || (mode === 'files' && !filesSelected) ? 'disabled' : ''}>${state.loadingUrls ? (('불러오는 중…')) : t('start')} <span>↗</span></button></div>
       ${state.error || linkError ? `<div class="notice error" role="alert">${esc(state.error || linkError)}</div>` : ''}
-      <div class="load-footer"><span>${integrated ? '연습 내용은 현재 브라우저에 자동 저장되어 이어서 연습할 수 있습니다.' : t('offline')}</span></div>
+      <aside class="practice-storage-guide" aria-labelledby="storageGuideTitle">
+        <h3 id="storageGuideTitle"><span class="storage-guide-icon" aria-hidden="true">i</span>연습 기록 및 이어하기 안내</h3>
+        <p>연습 내용은 자동 저장되며, 이어하기는 동일한 기기와 접속 환경(앱 또는 브라우저)에서만 가능합니다.<br>새 연습을 시작하면 수업에 관계없이 이전 연습 기록이 삭제됩니다.</p>
+      </aside>
+      ${integrated ? '' : '<div class="load-footer"><span>선택한 파일은 서버에 업로드하지 않습니다.</span></div>'}
     </section>
   </main>`);
   if (!integrated && mode === 'files') bindHome();
