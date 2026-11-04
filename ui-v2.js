@@ -204,6 +204,14 @@ function saveReviewProgress() {
 function advanceReviewedCue() {
   if (state.index >= state.selected.length - 1) renderSummary();
   else { state.index++; renderPractice(); }
+  // New content should start at the top, even after a long section or modal focus restore.
+  const page = document.querySelector('main.page');
+  window.scrollTo({top:0,left:0,behavior:'instant'});
+  requestAnimationFrame(() => {
+    if (!page?.isConnected || document.querySelector('main.page') !== page) return;
+    window.scrollTo({top:0,left:0,behavior:'instant'});
+    scheduleFloatingPlayer();
+  });
 }
 
 function cueAllWordsLocked(result) {
