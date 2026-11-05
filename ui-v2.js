@@ -779,11 +779,27 @@ function bindWordInputs(c) {
     let composing = false;
     let lastHandledValue = null;
     const handleInput = event => {
-      if (event.isComposing || composing || !entry.isConnected || current()?.id !== c.id) return;
-      // Ignore the old editor's trailing input event after a composition-end handoff.
+      if (!entry.isConnected || current()?.id !== c.id) return;
+      // Ignore trailing native commits after either a composition-end or early-match handoff.
       if (wordIsRevealed(c, i) || wordIsCorrect(c, i)) {
         const stored = (state.wordAnswers[c.id] || [])[i] || '';
         if (input.value !== stored) input.value = stored;
+        return;
+      }
+      if (event.isComposing || composing) {
+        // Experimental: Samsung Keyboard can keep complete English words composing
+        // until Space/suggestion selection. Only an exact single-word match may advance.
+        const expected = words[i] || '';
+        const englishWord = /^[A-Za-z]+(?:['’\-][A-Za-z]+)*$/.test(expected);
+        if (document.activeElement !== input || !englishWord || wordTokens(input.value).length !== 1
+          || normalizedWord(input.value) !== normalizedWord(expected)) return;
+        const typed = state.wordAnswers[c.id] || (state.wordAnswers[c.id] = []);
+        typed[i] = input.value;
+        lastHandledValue = input.value;
+        composing = false;
+        console.info('[MintScribe][input] 조합 중인 영어 정답 인식 (실험)', {section:state.index + 1,wordIndex:i + 1});
+        // Save the match before focusing: native compositionend can fire inside focus().
+        sync(i + 1);
         return;
       }
       if (input.value === lastHandledValue) return;
