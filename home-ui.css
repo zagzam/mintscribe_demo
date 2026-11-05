@@ -82,3 +82,11 @@ html[data-theme="dark"] .home-page .practice-storage-guide{background:#292929;}
   html .practice-storage-guide h3{gap:8px;margin-bottom:8px;font-size:15px;}
   html .practice-storage-guide p{font-size:13px;}
 }
+
+/* Long filenames must shrink inside the card, leaving file-type labels visible. */
+html .home-page .neon-load,
+html .home-page .load-mode,
+html .home-page .file-status{min-width:0;max-width:100%;}
+html .home-page .file-line{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%;}
+html .home-page .file-line b{display:block;flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+html .home-page .file-line > span{flex:0 0 auto;}
