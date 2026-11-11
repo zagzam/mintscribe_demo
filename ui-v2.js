@@ -581,14 +581,21 @@ function bindAudioDiagnostics() {
   audio.addEventListener('loadedmetadata', () => {
     console.info('[MintScribe][02/audio] 음원 정보 수신', {duration:audio.duration,readyState:audio.readyState});
   });
-  audio.addEventListener('playing', () => {
-    // Record successful playback, not a click that can fail or be blocked.
-    if (audio.isConnected && current()?.id === cue.id && !audio.paused && audio.readyState >= 2
-      && audio.currentTime >= cue.start && audio.currentTime < cue.end && !state.playedCues[cue.id]) {
+  let playbackStarted = false;
+  const recordPlayback = () => {
+    // Require real playback; allow the seek bar's 0.01s precision at the start.
+    if (playbackStarted && audio.isConnected && current()?.id === cue.id && !audio.paused
+      && !audio.seeking && audio.readyState >= 2 && audio.currentTime >= cue.start - 0.01
+      && audio.currentTime < cue.end && !state.playedCues[cue.id]) {
       state.playedCues[cue.id] = true;
       console.info('[MintScribe][04/entry] 구간 재생 이력 저장', {section:state.index + 1});
       saveReviewProgress();
     }
+  };
+  audio.addEventListener('timeupdate', recordPlayback);
+  audio.addEventListener('playing', () => {
+    playbackStarted = true;
+    recordPlayback();
     console.info('[MintScribe][02/audio] 음원 재생', {currentTime:audio.currentTime,readyState:audio.readyState});
     document.querySelector('.audio-load-error')?.remove();
   });
